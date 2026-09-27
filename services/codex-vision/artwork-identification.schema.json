@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artist",
+    "title",
+    "year",
+    "medium",
+    "candidates",
+    "confidence",
+    "source_urls",
+    "evidence"
+  ],
+  "properties": {
+    "artist": { "type": ["string", "null"], "maxLength": 1000 },
+    "title": { "type": ["string", "null"], "maxLength": 1000 },
+    "year": { "type": ["string", "null"], "maxLength": 100 },
+    "medium": { "type": ["string", "null"], "maxLength": 1000 },
+    "candidates": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["text"],
+        "properties": {
+          "text": { "type": "string", "minLength": 1, "maxLength": 1000 }
+        }
+      }
+    },
+    "confidence": { "type": "string", "enum": ["high", "medium", "low"] },
+    "source_urls": {
+      "type": "array",
+      "maxItems": 8,
+      "items": { "type": "string", "format": "uri", "pattern": "^https?://" }
+    },
+    "evidence": {
+      "type": "array",
+      "maxItems": 8,
+      "items": { "type": "string", "maxLength": 2000 }
+    }
+  }
+}
