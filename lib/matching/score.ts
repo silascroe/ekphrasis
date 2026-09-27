@@ -12,21 +12,18 @@ const weight: Record<Exclude<EvidenceState, "UNAVAILABLE">, number> = {
 };
 
 function independentSupportCount(candidate: ArtworkCandidate): number {
-  const support = candidate.evidence_support;
-  if (!support) {
-    return Object.values(candidate.evidence).filter(state => state === "MATCH").length;
-  }
+  const support = candidate.evidence_support ?? {};
+  const entries = (Object.entries(candidate.evidence) as Array<[keyof Evidence, EvidenceState]>)
+    .filter(([, state]) => state === "MATCH")
+    .map(([dimension]) => {
+      const signals = support[dimension];
+      return [
+        dimension,
+        signals?.length ? signals : [`__dimension:${dimension}`]
+      ] as const;
+    });
 
-  const entries = (Object.entries(support) as Array<[keyof Evidence, string[] | undefined]>)
-    .filter(([dimension, signals]) =>
-      candidate.evidence[dimension] === "MATCH" && Boolean(signals?.length)
-    );
-
-  if (!entries.length) {
-    return Object.values(candidate.evidence).filter(state => state === "MATCH").length;
-  }
-
-  const byDimension = new Map(entries.map(([dimension, signals]) => [dimension, signals ?? []]));
+  const byDimension = new Map(entries);
   const signalOwner = new Map<string, keyof Evidence>();
 
   function assign(dimension: keyof Evidence, seenSignals: Set<string>): boolean {
