@@ -29,6 +29,7 @@ describe("HuggingFaceVisionAdapter", () => {
       type: "json_schema",
       json_schema: { name: "artwork_identification", strict: true }
     });
+    expect(body.response_format.json_schema.schema.properties.candidates.maxItems).toBeUndefined();
     fetchMock.mockRestore();
   });
 
