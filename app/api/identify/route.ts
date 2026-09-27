@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
+export const maxDuration = 300;
 import { identifyImage } from "../../../lib/pipeline/identify";
 import { UpstashResultCache } from "../../../lib/cache/upstash";
 import { MemoryResultCache, ResilientResultCache } from "../../../lib/cache/runtime";
@@ -10,6 +11,7 @@ import { UpstashRateLimitStore } from "../../../lib/rate-limit/upstash";
 import { getRateLimitSecret } from "../../../lib/rate-limit/secret";
 import { parseUploadContext } from "../../../lib/image/upload-context";
 import { HuggingFaceVisionAdapter } from "../../../lib/vision/huggingface";
+import { CodexVisionAdapter } from "../../../lib/vision/codex";
 import { MetAdapter } from "../../../lib/museums/met";
 import { RijksmuseumAdapter } from "../../../lib/museums/rijksmuseum";
 import { ArticAdapter } from "../../../lib/museums/artic";
@@ -91,12 +93,16 @@ export async function POST(request: Request) {
     );
 
     const museums = [new MetAdapter(), new RijksmuseumAdapter(), new ArticAdapter(), new SmithsonianAdapter()];
+    const agentUrl = process.env.EKPHRASIS_AGENT_URL?.trim();
+    const agentSecret = process.env.EKPHRASIS_AGENT_SECRET?.trim();
     const result = await identifyImage(
       { file: file as File, address: identity, context },
       {
         cache,
         limiter: { check: async () => ({ allowed: true }) },
-        vision: new HuggingFaceVisionAdapter(),
+        vision: agentUrl && agentSecret
+          ? new CodexVisionAdapter(agentUrl, agentSecret)
+          : new HuggingFaceVisionAdapter(),
         museums,
         clip: clipConfigured
           ? {

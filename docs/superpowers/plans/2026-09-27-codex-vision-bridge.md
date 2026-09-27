@@ -1,6 +1,6 @@
 # Codex Vision Bridge Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Replace Ekphrasis's failing Hugging Face vision/candidate-generation stage with an authenticated droplet-hosted Python service that invokes Codex on the uploaded artwork while preserving useful filename/metadata clues and leaving the existing museum verification pipeline intact.
 
@@ -50,7 +50,7 @@
 - Produces: `UploadContext`, `extractUploadContext(file: File): Promise<UploadContext>`, `canonicalUploadContext(context?: UploadContext): string`.
 - Consumes: browser `File`; best-effort `exifr` parsing.
 
-- [ ] **Step 1: Write failing upload-context tests**
+- [x] **Step 1: Write failing upload-context tests**
 
 Add tests asserting:
 - `extractUploadContext()` preserves `originalFilename`, `originalMimeType`, and `originalSize`;
@@ -62,7 +62,7 @@ Add tests asserting:
 Run: `npm test -- tests/frontend/upload-context.test.ts`
 Expected: FAIL because the module/functions do not exist.
 
-- [ ] **Step 2: Add `exifr` and implement upload-context extraction**
+- [x] **Step 2: Add `exifr` and implement upload-context extraction**
 
 Create:
 ```ts
@@ -90,7 +90,7 @@ Use explicit metadata tag selection; metadata parsing is best-effort and non-blo
 Run: `npm test -- tests/frontend/upload-context.test.ts`
 Expected: PASS.
 
-- [ ] **Step 3: Send context before normalization destroys metadata**
+- [x] **Step 3: Send context before normalization destroys metadata**
 
 In `UploadForm.submit(file)`, call `extractUploadContext(file)` before `prepareUploadFile(file)`. Append:
 - `image`: prepared file;
@@ -101,7 +101,7 @@ Extend the existing upload-preparation test to prove a large `painting.heic` can
 Run: `npm test -- tests/frontend/upload-preparation.test.ts tests/frontend/upload-context.test.ts`
 Expected: PASS.
 
-- [ ] **Step 4: Commit Task 1**
+- [x] **Step 4: Commit Task 1**
 
 Commit message: `feat: preserve upload identification context`.
 
@@ -126,7 +126,7 @@ export interface VisionAdapter { detect(input: VisionInput): Promise<VisionDetec
 ```
 - Existing Hugging Face behavior remains compatible by ignoring `context`.
 
-- [ ] **Step 1: Write failing pipeline/context tests**
+- [x] **Step 1: Write failing pipeline/context tests**
 
 Assert:
 - `identifyImage()` passes normalized bytes and request context to `vision.detect()`;
@@ -138,21 +138,21 @@ Assert:
 Run: `npm test -- tests/unit/pipeline/upload-context.test.ts tests/api/identify.test.ts`
 Expected: FAIL.
 
-- [ ] **Step 2: Extract the vision interface and update adapters**
+- [x] **Step 2: Extract the vision interface and update adapters**
 
 Move `VisionAdapter` out of `huggingface.ts` into `lib/vision/types.ts`. Change `HuggingFaceVisionAdapter.detect` to accept `VisionInput` and use only `input.image`.
 
 Run: `npm run typecheck`
 Expected: initial downstream type errors identify every call site that must be updated.
 
-- [ ] **Step 3: Parse context at the API boundary and make caching context-sensitive**
+- [x] **Step 3: Parse context at the API boundary and make caching context-sensitive**
 
 Extend `IdentifyRequest` with `context?: UploadContext`. Parse/validate the `context` form field conservatively in the route. Derive cache identity from image bytes plus `canonicalUploadContext(context)`; keep `originalSize` diagnostic-only.
 
 Run: `npm test -- tests/unit/pipeline/upload-context.test.ts tests/api/identify.test.ts`
 Expected: PASS.
 
-- [ ] **Step 4: Run regression tests and commit Task 2**
+- [x] **Step 4: Run regression tests and commit Task 2**
 
 Run: `npm test && npm run typecheck`
 Expected: PASS.
@@ -177,7 +177,7 @@ Commit message: `refactor: pass upload context through vision pipeline`.
   - `EKPHRASIS_AGENT_SECRET`
   - optional `EKPHRASIS_AGENT_TIMEOUT_MS`, default 260000.
 
-- [ ] **Step 1: Write failing adapter tests**
+- [x] **Step 1: Write failing adapter tests**
 
 Mock `fetch` and assert:
 - request URL is `<agent-url>/v1/identify`;
@@ -193,7 +193,7 @@ Mock `fetch` and assert:
 Run: `npm test -- tests/adapters/codex-vision.test.ts`
 Expected: FAIL.
 
-- [ ] **Step 2: Implement `CodexVisionAdapter`**
+- [x] **Step 2: Implement `CodexVisionAdapter`**
 
 Create:
 ```ts
@@ -213,7 +213,7 @@ Bound provider error text before logging. Do not log image contents or secret va
 Run: `npm test -- tests/adapters/codex-vision.test.ts`
 Expected: PASS.
 
-- [ ] **Step 3: Select Codex in production without deleting HF**
+- [x] **Step 3: Select Codex in production without deleting HF**
 
 In the route, instantiate `CodexVisionAdapter` when both `EKPHRASIS_AGENT_URL` and `EKPHRASIS_AGENT_SECRET` are set; otherwise retain the HF adapter for rollback/dev compatibility.
 
@@ -222,7 +222,7 @@ Add `export const maxDuration = 300`.
 Run: `npm test && npm run typecheck && npm run build`
 Expected: PASS.
 
-- [ ] **Step 4: Commit Task 3**
+- [x] **Step 4: Commit Task 3**
 
 Commit message: `feat: add Codex vision provider`.
 

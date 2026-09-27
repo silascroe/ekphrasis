@@ -4,7 +4,7 @@ Ekphrasis is a web service for identifying paintings from photographs — effect
 
 ## MVP architecture
 
-`Image Intake → SHA-256 Cache → Hugging Face Vision → Candidate Extraction → parallel Museum Search → Matching/Scoring → CLIP/Qdrant fallback → Enrichment → Presentation`
+`Image Intake → SHA-256 Cache → Vision Provider → Candidate Extraction → parallel Museum Search → Matching/Scoring → CLIP/Qdrant fallback → Enrichment → Presentation`
 
 Primary museum sources:
 - The Metropolitan Museum of Art
@@ -19,7 +19,7 @@ The written architecture documents under `docs/superpowers/` describe the origin
 ## Local development
 
 1. Copy `.env.example` to `.env.local`.
-2. Set `HF_TOKEN` and a separate `RATE_LIMIT_HMAC_SECRET` before exercising `/api/identify`.
+2. Set `RATE_LIMIT_HMAC_SECRET` before exercising `/api/identify`. Hugging Face remains the local/development fallback; configure both bridge variables to use the Codex vision service.
 3. Add museum, Upstash, Qdrant, and CLIP credentials only for the integrations you intend to exercise.
 4. Install dependencies with `npm install`.
 5. Start the app with `npm run dev`.
@@ -39,6 +39,8 @@ Public states are:
 Repeated identical uploads use a SHA-256 result cache. Normal results use a 7-day TTL; degraded results use a 15-minute TTL. `API_UNAVAILABLE` is not cached as a normal result.
 
 Anonymous requests are rate-limited before recognition starts. The MVP uses 5 requests/minute and 30 requests/hour per privacy-preserving identity key.
+
+The authenticated Codex vision bridge is enabled when `EKPHRASIS_AGENT_URL` and `EKPHRASIS_AGENT_SECRET` are both set. The optional `EKPHRASIS_AGENT_TIMEOUT_MS` defaults to 260000; the identify route allows up to 300 seconds. If either bridge variable is absent, the route uses Hugging Face. See `services/codex-vision/README.md` for bridge deployment instructions.
 
 ## Known incomplete integrations
 
