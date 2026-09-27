@@ -10,6 +10,9 @@ const FIELD_LIMITS = {
   comment: 1000
 } as const;
 
+const MAX_ORIGINAL_FILE_SIZE = 50 * 1024 * 1024;
+const ALLOWED_CONTEXT_KEYS = ["originalFilename", "originalMimeType", "originalSize", "embedded"];
+
 export type EmbeddedArtworkMetadata = Partial<Record<keyof typeof FIELD_LIMITS, string>>;
 
 export type UploadContext = {
@@ -55,6 +58,60 @@ function firstText(metadata: unknown, candidates: Array<unknown>, maxLength: num
     if (text) return text;
   }
   return undefined;
+}
+
+function hasOnlyKeys(value: MetadataRecord, allowed: string[]): boolean {
+  return Object.keys(value).every(key => allowed.includes(key));
+}
+
+export function parseUploadContext(value: unknown): UploadContext | undefined {
+  if (value === null || value === undefined) return undefined;
+  if (typeof value !== "string") throw new Error("Upload context must be JSON text.");
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(value);
+  } catch {
+    throw new Error("Upload context JSON is malformed.");
+  }
+
+  const raw = record(parsed);
+  if (!parsed || Array.isArray(parsed) || !hasOnlyKeys(raw, ALLOWED_CONTEXT_KEYS)) {
+    throw new Error("Upload context shape is invalid.");
+  }
+  if (typeof raw.originalFilename !== "string" || raw.originalFilename.length > 512) {
+    throw new Error("Upload filename is invalid.");
+  }
+  if (raw.originalMimeType !== null && (typeof raw.originalMimeType !== "string" || raw.originalMimeType.length > 128)) {
+    throw new Error("Upload MIME type is invalid.");
+  }
+  if (!Number.isSafeInteger(raw.originalSize) || (raw.originalSize as number) < 0 || (raw.originalSize as number) > MAX_ORIGINAL_FILE_SIZE) {
+    throw new Error("Original upload size is invalid.");
+  }
+
+  let embedded: EmbeddedArtworkMetadata | undefined;
+  if (raw.embedded !== undefined) {
+    const source = record(raw.embedded);
+    if (!raw.embedded || Array.isArray(raw.embedded) || !hasOnlyKeys(source, Object.keys(FIELD_LIMITS))) {
+      throw new Error("Embedded metadata fields are invalid.");
+    }
+    embedded = {};
+    for (const [key, fieldValue] of Object.entries(source)) {
+      const maxLength = FIELD_LIMITS[key as keyof typeof FIELD_LIMITS];
+      if (typeof fieldValue !== "string" || fieldValue.length > maxLength) {
+        throw new Error("Embedded metadata value is invalid.");
+      }
+      if (fieldValue.trim()) embedded[key as keyof EmbeddedArtworkMetadata] = fieldValue.trim();
+    }
+    if (!Object.keys(embedded).length) embedded = undefined;
+  }
+
+  return {
+    originalFilename: raw.originalFilename,
+    originalMimeType: raw.originalMimeType as string | null,
+    originalSize: raw.originalSize as number,
+    ...(embedded ? { embedded } : {})
+  };
 }
 
 function selectEmbeddedMetadata(value: unknown): EmbeddedArtworkMetadata | undefined {

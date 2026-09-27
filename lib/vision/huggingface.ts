@@ -1,7 +1,6 @@
 import type { VisionDetection } from "../candidates/extract";
 import { ProviderError } from "../errors";
-
-export interface VisionAdapter { detect(image: Buffer): Promise<VisionDetection>; }
+import type { VisionAdapter, VisionInput } from "./types";
 type VisionLogger = (event: string, details: Record<string, unknown>) => void;
 type ChatResponse = { choices?: Array<{ message?: { content?: string | Array<{ type?: string; text?: string }> } }> };
 const DEFAULT_MODEL = "CohereLabs/command-a-vision-07-2025:cohere";
@@ -77,7 +76,8 @@ export class HuggingFaceVisionAdapter implements VisionAdapter {
     private readonly log: VisionLogger = (event, details) => console.info("[ekphrasis]", event, details)
   ) {}
 
-  async detect(image: Buffer): Promise<VisionDetection> {
+  async detect(input: VisionInput): Promise<VisionDetection> {
+    const image = input.image;
     if (!this.token) throw new ProviderError("vision", "AUTH", "Hugging Face token is not configured.");
     const startedAt = Date.now();
     this.log("vision.start", { model: MODEL, bytes: image.byteLength, timeoutMs: VISION_TIMEOUT_MS });

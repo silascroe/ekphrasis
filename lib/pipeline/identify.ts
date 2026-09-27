@@ -3,8 +3,9 @@ import type { ResultCache } from "../cache/cache";
 import { sha256 } from "../cache/cache";
 import { validateUpload, type ValidatedUpload } from "../image/validate";
 import { normalizeImage, type NormalizedImage } from "../image/normalize";
+import { canonicalUploadContext, type UploadContext } from "../image/upload-context";
 import { extractSearchCandidates, type ExtractedArtwork } from "../candidates/extract";
-import type { VisionAdapter } from "../vision/huggingface";
+import type { VisionAdapter } from "../vision/types";
 import type { MuseumAdapter } from "../museums/types";
 import { searchMuseums } from "../museums/search";
 import { equivalentDate, equivalentText } from "../matching/normalize";
@@ -19,7 +20,7 @@ import { extractRelatedReading } from "../enrichment/related-reading";
 import type { RateLimitDecision } from "../rate-limit/rate-limit";
 import { InputError, ProviderError } from "../errors";
 
-export type IdentifyRequest = { file: File; address: string };
+export type IdentifyRequest = { file: File; address: string; context?: UploadContext };
 
 export interface IdentifyDeps {
   cache: ResultCache;
@@ -131,7 +132,8 @@ export async function identifyImage(request: IdentifyRequest, deps: IdentifyDeps
   }
 
   const originalBytes = new Uint8Array(await request.file.arrayBuffer());
-  const hash = await sha256(originalBytes);
+  const imageHash = await sha256(originalBytes);
+  const hash = await sha256(Buffer.from(JSON.stringify({ imageHash, context: canonicalUploadContext(request.context) }), "utf8"));
   try {
     const cached = await deps.cache.get(hash);
     if (cached) return cached;
@@ -145,7 +147,7 @@ export async function identifyImage(request: IdentifyRequest, deps: IdentifyDeps
 
     if (!deps.vision || !deps.museums) throw new ProviderError("vision", "PROVIDER_ERROR", "Recognition providers are not configured.");
 
-    const detection = await deps.vision.detect(image.bytes);
+    const detection = await deps.vision.detect({ image: image.bytes, context: request.context });
     const queries = extractSearchCandidates(detection);
     const museumResult = await searchMuseums(deps.museums, queries);
     let candidates = evidenceCandidates(museumResult.candidates, queries, detection.extracted);

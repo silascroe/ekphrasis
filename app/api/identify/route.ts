@@ -8,6 +8,7 @@ import type { ResultCache } from "../../../lib/cache/cache";
 import { SlidingWindowRateLimiter, createRequestIdentity } from "../../../lib/rate-limit/rate-limit";
 import { UpstashRateLimitStore } from "../../../lib/rate-limit/upstash";
 import { getRateLimitSecret } from "../../../lib/rate-limit/secret";
+import { parseUploadContext } from "../../../lib/image/upload-context";
 import { HuggingFaceVisionAdapter } from "../../../lib/vision/huggingface";
 import { MetAdapter } from "../../../lib/museums/met";
 import { RijksmuseumAdapter } from "../../../lib/museums/rijksmuseum";
@@ -39,6 +40,13 @@ export async function POST(request: Request) {
   const form = await request.formData();
   const file = form.get("image");
   if (!file || typeof file !== "object" || !("arrayBuffer" in file) || !("size" in file)) {
+    return NextResponse.json({ state: "ERROR", error: "INVALID_IMAGE" }, { status: 400 });
+  }
+
+  let context: ReturnType<typeof parseUploadContext>;
+  try {
+    context = parseUploadContext(form.get("context"));
+  } catch {
     return NextResponse.json({ state: "ERROR", error: "INVALID_IMAGE" }, { status: 400 });
   }
 
@@ -84,7 +92,7 @@ export async function POST(request: Request) {
 
     const museums = [new MetAdapter(), new RijksmuseumAdapter(), new ArticAdapter(), new SmithsonianAdapter()];
     const result = await identifyImage(
-      { file: file as File, address: identity },
+      { file: file as File, address: identity, context },
       {
         cache,
         limiter: { check: async () => ({ allowed: true }) },
