@@ -4,7 +4,7 @@ This directory is the public, static architecture demo for Ekphrasis.
 
 ## Fixture mode
 
-The dashboard imports `data/demo-run.js` and renders a deterministic identification run. It does not call Google Vision, museum APIs, Qdrant, Wikidata, or Wikipedia for data. The only remote resources are the explicitly displayed artwork image and source links used to demonstrate museum provenance.
+The dashboard imports `data/demo-run.js` and renders a deterministic identification run. It does not call Hugging Face Vision, museum APIs, Qdrant, Wikidata, or Wikipedia for data. The only remote resources are the explicitly displayed artwork image and source links used to demonstrate museum provenance.
 
 The fixture intentionally shows:
 - four primary museum adapters running in parallel;
