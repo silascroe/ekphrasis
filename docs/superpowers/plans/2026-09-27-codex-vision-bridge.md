@@ -132,7 +132,8 @@ Assert:
 - `identifyImage()` passes normalized bytes and request context to `vision.detect()`;
 - identical image bytes with different canonical filename/embedded clues produce different cache hashes;
 - changing only `originalSize` does not change the cache identity;
-- malformed `context` JSON at `POST /api/identify` returns 400 rather than reaching providers.
+- malformed `context` JSON at `POST /api/identify` returns 400 rather than reaching providers;
+- a Codex candidate that has no matching museum result still produces the existing `NO_MATCH` behavior rather than bypassing the evidence gate.
 
 Run: `npm test -- tests/unit/pipeline/upload-context.test.ts tests/api/identify.test.ts`
 Expected: FAIL.
@@ -254,7 +255,7 @@ Tests cover:
 - missing/wrong bearer secret → 401;
 - unsupported MIME → 400;
 - oversized decoded image → 413;
-- unknown context fields are rejected/ignored according to the explicit model;
+- unknown context fields are rejected with 400 by strict request validation;
 - one active request plus a second concurrent request produces the configured busy/retryable behavior;
 - valid mocked runner response → 200 exact schema.
 
@@ -265,7 +266,7 @@ Expected: FAIL before service modules exist.
 
 Implement strict models for version 1, image MIME/base64, safe context, candidate output, source URLs, confidence, and evidence.
 
-Use `hmac.compare_digest` for the bearer value. Decode into a generated temporary directory and generated filename.
+Use `hmac.compare_digest` for the bearer value. Configure strict Pydantic models (`extra="forbid"`) and map request-validation failures to HTTP 400. Decode into a generated temporary directory and generated filename.
 
 Run: `python -m pytest tests/test_api.py -q`
 Expected: API/model tests PASS with runner mocked.
@@ -286,6 +287,7 @@ Mock the async subprocess layer and assert the argv includes:
 
 Assert:
 - prompt contains safe filename/metadata clues;
+- the original user filename appears only in prompt/context and is never used as the generated filesystem path;
 - prompt explicitly stops after minimal authoritative verification for obvious/directly corroborated identities;
 - timeout kills the subprocess and maps to a timeout error;
 - invalid output JSON/schema maps to provider failure;
