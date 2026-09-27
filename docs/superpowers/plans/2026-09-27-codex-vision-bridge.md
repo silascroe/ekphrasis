@@ -17,7 +17,7 @@
 - Never forward GPS, device identifiers, capture timestamps, camera make/model, or raw metadata objects.
 - The droplet exposes only `POST /v1/identify`; there is no generic prompt/shell/Codex endpoint.
 - User-controlled strings are never interpolated into a shell command.
-- Codex uses live web search, image input, strict output schema, ephemeral sessions, and a read-only sandbox.
+- Codex uses live web search, image input, strict output schema, ephemeral sessions, and the CLI's read-only sandbox. The bridge secret is not passed to the Codex child process.
 - Initial Codex concurrency is 1.
 - `CODEX_TIMEOUT_SECONDS` defaults to 240; Vercel `POST /api/identify` declares `maxDuration = 300`.
 - Codex confidence is diagnostic only; existing museum evidence remains authoritative.
@@ -249,7 +249,7 @@ async def identify_with_codex(request: IdentifyRequest, settings: Settings) -> I
 ```
 - Codex invocation is an argv list; no shell interpolation.
 
-- [ ] **Step 1: Write failing service API/model tests**
+- [x] **Step 1: Write failing service API/model tests**
 
 Tests cover:
 - missing/wrong bearer secret → 401;
@@ -262,7 +262,7 @@ Tests cover:
 Run from `services/codex-vision`: `python -m pytest tests/test_api.py -q`
 Expected: FAIL before service modules exist.
 
-- [ ] **Step 2: Implement Pydantic request/response models and FastAPI boundary**
+- [x] **Step 2: Implement Pydantic request/response models and FastAPI boundary**
 
 Implement strict models for version 1, image MIME/base64, safe context, candidate output, source URLs, confidence, and evidence.
 
@@ -271,7 +271,7 @@ Use `hmac.compare_digest` for the bearer value. Configure strict Pydantic models
 Run: `python -m pytest tests/test_api.py -q`
 Expected: API/model tests PASS with runner mocked.
 
-- [ ] **Step 3: Write failing Codex runner tests**
+- [x] **Step 3: Write failing Codex runner tests**
 
 Mock the async subprocess layer and assert the argv includes:
 - `codex`;
@@ -296,7 +296,7 @@ Assert:
 Run: `python -m pytest tests/test_runner.py -q`
 Expected: FAIL.
 
-- [ ] **Step 4: Implement the runner**
+- [x] **Step 4: Implement the runner**
 
 Use `asyncio.create_subprocess_exec`, never `shell=True`. Use a process-level `asyncio.Semaphore(1)`.
 
@@ -312,7 +312,7 @@ The prompt should first exploit direct clues and stop once an exact identity has
 Run: `python -m pytest -q`
 Expected: PASS.
 
-- [ ] **Step 5: Commit Task 4**
+- [x] **Step 5: Commit Task 4**
 
 Commit message: `feat: add Codex vision bridge service`.
 
@@ -325,13 +325,14 @@ Commit message: `feat: add Codex vision bridge service`.
 - Create: `services/codex-vision/README.md`
 - Create: `services/codex-vision/deploy/ekphrasis-codex-vision.service`
 - Create: `services/codex-vision/deploy/Caddyfile.example`
+- Create: `services/codex-vision/deploy/codex-config.toml.example`
 - Create: `services/codex-vision/.env.example`
 
 **Interfaces:**
 - CI must run both TypeScript and Python test suites.
 - Deployment templates contain placeholders only; never commit the real bearer secret or Codex credentials.
 
-- [ ] **Step 1: Extend CI**
+- [x] **Step 1: Extend CI**
 
 Add Python 3.12 setup and install/test `services/codex-vision` after the existing Node checks.
 
@@ -343,7 +344,7 @@ Run locally/CI-equivalent:
 
 Expected: all PASS.
 
-- [ ] **Step 2: Add deployment documentation/templates**
+- [x] **Step 2: Add deployment documentation/templates**
 
 Document:
 - dedicated unprivileged service account;
@@ -358,7 +359,7 @@ Document:
 
 The systemd template runs Uvicorn from the service virtualenv and restarts on failure.
 
-- [ ] **Step 3: Commit Task 5**
+- [x] **Step 3: Commit Task 5**
 
 Commit message: `chore: add Codex bridge CI and deployment runbook`.
 

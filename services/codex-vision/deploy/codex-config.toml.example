@@ -1,0 +1,3 @@
+# Install as /home/ekphrasis/.codex/config.toml.
+# Authenticate the service account with `codex login` separately.
+sandbox_mode = "read-only"

@@ -1,0 +1,30 @@
+[Unit]
+Description=Ekphrasis Codex Vision Bridge
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ekphrasis
+Group=ekphrasis
+WorkingDirectory=/opt/ekphrasis/codex-vision
+EnvironmentFile=/etc/ekphrasis/codex-vision.env
+ExecStart=/opt/ekphrasis/codex-vision/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8787 --workers 1
+Restart=on-failure
+RestartSec=5
+UMask=0077
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+ReadWritePaths=/home/ekphrasis/.cache /home/ekphrasis/.codex /home/ekphrasis/work
+
+[Install]
+WantedBy=multi-user.target
