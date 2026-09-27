@@ -39,6 +39,32 @@ function parseDetection(raw: string): VisionDetection {
   } catch { throw new ProviderError("vision", "INVALID_RESPONSE", "Vision response JSON was invalid."); }
 }
 
+async function readProviderMessage(response: Response): Promise<string | undefined> {
+  const raw = (await response.text()).trim();
+  if (!raw) return undefined;
+
+  let message = raw;
+  try {
+    const payload = JSON.parse(raw) as {
+      error?: string | { message?: unknown };
+      message?: unknown;
+    };
+    const errorMessage =
+      typeof payload.error === "string"
+        ? payload.error
+        : typeof payload.error?.message === "string"
+          ? payload.error.message
+          : typeof payload.message === "string"
+            ? payload.message
+            : undefined;
+    if (errorMessage) message = errorMessage;
+  } catch {
+    // Plain-text or HTML provider errors are still useful when bounded below.
+  }
+
+  return message.replace(/\s+/g, " ").slice(0, 240);
+}
+
 export class HuggingFaceVisionAdapter implements VisionAdapter {
   constructor(
     private readonly token = process.env.HF_TOKEN,
@@ -55,10 +81,15 @@ export class HuggingFaceVisionAdapter implements VisionAdapter {
     ] }], temperature: 0, max_tokens: 300 };
     try {
       const response = await fetch(ENDPOINT, { method: "POST", headers: { Authorization: "Bearer " + this.token, "Content-Type": "application/json" }, body: JSON.stringify(body), signal: AbortSignal.timeout(VISION_TIMEOUT_MS) });
-      this.log("vision.response", { status: response.status, elapsedMs: Date.now() - startedAt });
-      if (response.status === 401 || response.status === 403) throw new ProviderError("vision", "AUTH", "Hugging Face authentication failed.");
-      if (response.status === 429) throw new ProviderError("vision", "RATE_LIMITED", "Hugging Face rate limit reached.");
-      if (!response.ok) throw new ProviderError("vision", "PROVIDER_ERROR", "Hugging Face vision request failed.");
+      const elapsedMs = Date.now() - startedAt;
+      if (!response.ok) {
+        const providerMessage = await readProviderMessage(response);
+        this.log("vision.response", { status: response.status, elapsedMs, providerMessage });
+        if (response.status === 401 || response.status === 403) throw new ProviderError("vision", "AUTH", "Hugging Face authentication failed.");
+        if (response.status === 429) throw new ProviderError("vision", "RATE_LIMITED", "Hugging Face rate limit reached.");
+        throw new ProviderError("vision", "PROVIDER_ERROR", "Hugging Face vision request failed.");
+      }
+      this.log("vision.response", { status: response.status, elapsedMs });
       const payload = await response.json() as ChatResponse;
       const content = payload.choices?.[0]?.message?.content;
       const text = typeof content === "string" ? content : Array.isArray(content) ? content.map(part => part.text ?? "").join("") : "";
