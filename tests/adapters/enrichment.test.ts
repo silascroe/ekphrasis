@@ -24,4 +24,21 @@ describe("enrichment adapters", () => {
     );
     await expect(fetchWikidataFacts("Artist")).resolves.toEqual(["Dutch painter"]);
   });
+
+  it("classifies Wikipedia aborts as timeouts", async () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new DOMException("aborted", "AbortError"));
+    await expect(fetchWikipedia("Example")).rejects.toMatchObject({
+      provider: "wikipedia",
+      failure: "TIMEOUT"
+    });
+  });
+
+  it("bounds Wikidata requests and classifies timeout failures", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockRejectedValue(new DOMException("timed out", "TimeoutError"));
+    await expect(fetchWikidataFacts("Artist")).rejects.toMatchObject({
+      provider: "wikidata",
+      failure: "TIMEOUT"
+    });
+    expect(fetchMock.mock.calls[0]?.[1]?.signal).toBeInstanceOf(AbortSignal);
+  });
 });
