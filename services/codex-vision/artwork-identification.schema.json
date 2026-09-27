@@ -33,7 +33,7 @@
     "source_urls": {
       "type": "array",
       "maxItems": 8,
-      "items": { "type": "string", "format": "uri", "pattern": "^https?://" }
+      "items": { "type": "string", "pattern": "^https?://" }
     },
     "evidence": {
       "type": "array",

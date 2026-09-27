@@ -22,7 +22,7 @@ Primary museum sources are The Metropolitan Museum of Art, Rijksmuseum, Art Inst
 
 ## Bridge rollout status
 
-Status as of 2026-09-27: implementation is on the open, review-ready [PR #7](https://github.com/silascroe/ekphrasis-repair/pull/7). The bridge, tests, CI integration, and deployment templates are in the branch. The service has not been installed on the Droplet, Codex has not been authenticated for a dedicated service account, no bridge secret or Vercel bridge variables have been configured, and live end-to-end artwork tests remain pending. A ready Vercel preview is not evidence that the Droplet bridge is live.
+Status as of 2026-09-27: implementation is on the open [PR #7](https://github.com/silascroe/ekphrasis-repair/pull/7). The bridge service is running on the Droplet as the existing `domainpatrol` user, and a live image request returned a valid Codex identification. The remaining step is to add `EKPHRASIS_AGENT_URL` and `EKPHRASIS_AGENT_SECRET` to the `feature/codex-vision-bridge` Preview environment in Vercel and redeploy; then verify the full museum and UI path.
 
 See [the bridge design](docs/superpowers/specs/2026-09-27-codex-vision-bridge-design.md), [the implementation plan](docs/superpowers/plans/2026-09-27-codex-vision-bridge.md), and [the Python service runbook](services/codex-vision/README.md). Deployment is the plan’s remaining Task 6.
 

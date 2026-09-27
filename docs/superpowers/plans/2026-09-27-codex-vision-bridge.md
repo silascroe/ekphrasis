@@ -348,8 +348,7 @@ Expected: all PASS.
 - [x] **Step 2: Add deployment documentation/templates**
 
 Document:
-- dedicated unprivileged service account;
-- ChatGPT-authenticated Codex CLI for that service account;
+- existing authenticated `domainpatrol` account and Codex profile, with a separate bridge systemd unit and Python environment;
 - FastAPI bound to localhost only;
 - Caddy HTTPS reverse proxy;
 - required environment variables;
@@ -372,29 +371,29 @@ Commit message: `chore: add Codex bridge CI and deployment runbook`.
 
 **Interfaces:**
 - Requires root/operator access on `first-droplet` that the restricted Remote Desktop Commander account intentionally does not have.
-- Requires a Codex-authenticated dedicated service account.
+- Uses the existing authenticated `domainpatrol` account and `/opt/domainpatrol/.codex`, per the user's deployment choice; keep the bridge's service unit, virtualenv, and temporary work directory separate from the Discord bot.
 - Requires Vercel environment writes.
 
-- [ ] **Step 1: Install the service on the droplet with privileged/operator Codex**
+- [x] **Step 1: Install the service on the droplet with privileged/operator Codex**
 
-Create the dedicated user, virtualenv, service directory, systemd unit, and HTTPS proxy according to the checked-in runbook. Do not widen the `chatgpt` Remote Desktop Commander sandbox.
+Install the virtualenv, service directory, systemd unit, and HTTPS proxy under `/opt/domainpatrol/ekphrasis-repair`, using the existing `domainpatrol` account. Do not widen the `chatgpt` Remote Desktop Commander sandbox.
 
-Expected: `GET /health` over HTTPS returns healthy without authentication-sensitive data.
+Expected: `GET /health` over HTTPS returns healthy without authentication-sensitive data. Verified on 2026-09-27 at `https://ekphrasisrepair.157.230.209.169.nip.io/health`; Caddy forwards only `/health` and `/v1/identify` to localhost.
 
-- [ ] **Step 2: Verify the dedicated account's Codex automation**
+- [x] **Step 2: Verify the existing account's Codex automation**
 
 As the service account, verify:
 - `codex --version`;
 - ChatGPT authentication;
 - `codex --search exec --image ... --output-schema ... --ephemeral --sandbox read-only` succeeds on a test image.
 
-Expected: valid strict JSON output.
+Expected: valid strict JSON output. Verified on 2026-09-27 through the authenticated HTTPS endpoint using a public-domain Met image: Codex returned Vincent van Gogh, *Madame Roulin and Her Baby* (1888), with a Met source URL. The initial request exposed unsupported JSON Schema `format: uri`; the schema now uses an HTTPS URL pattern and the bridge's Pydantic response model continues to validate URLs.
 
-- [ ] **Step 3: Set Vercel bridge environment variables and redeploy**
+- [ ] **Step 3: Set Vercel Preview bridge environment variables and redeploy**
 
-Set production/preview values for `EKPHRASIS_AGENT_URL` and `EKPHRASIS_AGENT_SECRET`. Trigger/redeploy the GitHub-connected project.
+Set `EKPHRASIS_AGENT_URL` and `EKPHRASIS_AGENT_SECRET` for the `feature/codex-vision-bridge` Preview environment only, then redeploy the GitHub-connected project. Keep Production on its current deployment until the Preview path is verified.
 
-Expected: production runtime uses `CodexVisionAdapter` rather than HF.
+Expected: the branch Preview uses `CodexVisionAdapter` rather than HF.
 
 - [ ] **Step 4: Run live artwork smoke tests**
 
@@ -404,6 +403,8 @@ Test:
 - `Minerva verandert Perdix in een vogel`;
 - Fernand Cormon's `Bacchanale de nymphes et de satyres`;
 - one cropped/edited image.
+
+Bridge-level live smoke test passes. Full Vercel-to-museum-to-UI smoke tests remain pending until the two Preview environment variables are configured and the branch redeploys.
 
 Record whether each is correct, honest no-match/uncertain, or confidently wrong.
 

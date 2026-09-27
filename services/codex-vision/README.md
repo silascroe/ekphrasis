@@ -18,33 +18,31 @@ Set `EKPHRASIS_AGENT_SECRET` before starting the service. The tests use a mocked
 
 ## Droplet installation
 
-The example unit expects Ubuntu, a dedicated `ekphrasis` account, Codex CLI installed for that account, and this service checked out at `/opt/ekphrasis/codex-vision`. Keep the application tree operator-owned and readable by the service account; Codex should not be able to modify its own service code.
+The unit uses the existing `domainpatrol` Linux account and its authenticated Codex profile at `/opt/domainpatrol/.codex`, as chosen for this deployment. The bridge runs as a separate systemd service with its own Python environment and writable work directory; it does not share the Discord bridge's process or virtualenv. Keep the application tree root-owned and readable by `domainpatrol`; Codex should not be able to modify its own service code.
 
-Create the account and writable runtime directories:
-
-```sh
-sudo useradd --system --create-home --home-dir /home/ekphrasis --shell /usr/sbin/nologin ekphrasis
-sudo install -d -o root -g ekphrasis -m 0750 /opt/ekphrasis/codex-vision
-sudo install -d -o ekphrasis -g ekphrasis -m 0700 /home/ekphrasis/.codex /home/ekphrasis/.cache /home/ekphrasis/work
-```
-
-Install the repository's service files into `/opt/ekphrasis/codex-vision`, then create the environment and virtual environment:
+Create the writable bridge work directory:
 
 ```sh
-sudo python3 -m venv /opt/ekphrasis/codex-vision/.venv
-sudo /opt/ekphrasis/codex-vision/.venv/bin/pip install -e /opt/ekphrasis/codex-vision
-sudo install -d -o root -g ekphrasis -m 0750 /etc/ekphrasis
-sudo install -o root -g ekphrasis -m 0640 services/codex-vision/.env.example /etc/ekphrasis/codex-vision.env
+sudo install -d -o root -g domainpatrol -m 0750 /opt/domainpatrol/ekphrasis-repair
+sudo install -d -o domainpatrol -g domainpatrol -m 0700 /opt/domainpatrol/ekphrasis-repair/work
 ```
 
-Edit `/etc/ekphrasis/codex-vision.env` and replace the placeholder with a fresh value from `openssl rand -hex 32`. Keep this secret out of Git. Install `deploy/codex-config.toml.example` as `/home/ekphrasis/.codex/config.toml`, owned by `ekphrasis` with mode `0600`. Install Codex CLI, then authenticate it interactively as the service account:
+Install the service files into `/opt/domainpatrol/ekphrasis-repair`, then create its virtual environment:
 
 ```sh
-sudo -u ekphrasis -H codex login
-sudo -u ekphrasis -H codex --version
+sudo python3 -m venv /opt/domainpatrol/ekphrasis-repair/.venv
+sudo /opt/domainpatrol/ekphrasis-repair/.venv/bin/pip install -e /opt/domainpatrol/ekphrasis-repair
+sudo install -o root -g root -m 0600 /dev/null /etc/ekphrasis-repair.env
 ```
 
-The service unit uses Codex's read-only sandbox for each request. It does not pass `EKPHRASIS_AGENT_SECRET` into the Codex child process. Codex can read files available to the dedicated service account, including its own authentication state; keep unrelated user data and credentials out of that account.
+Put a fresh `openssl rand -hex 32` value in `EKPHRASIS_AGENT_SECRET` in `/etc/ekphrasis-repair.env`, alongside `CODEX_HOME=/opt/domainpatrol/.codex`, `HOME=/opt/domainpatrol`, and `CODEX_WORK_ROOT=/opt/domainpatrol/ekphrasis-repair/work`. Keep the secret out of Git. Codex CLI is already installed and authenticated for `domainpatrol`; verify it without creating another login:
+
+```sh
+sudo -u domainpatrol env HOME=/opt/domainpatrol CODEX_HOME=/opt/domainpatrol/.codex codex login status
+sudo -u domainpatrol codex --version
+```
+
+The service unit uses Codex's read-only sandbox for each request. It does not pass `EKPHRASIS_AGENT_SECRET` into the Codex child process. Codex runs as `domainpatrol` and uses that account's existing authentication state and filesystem access.
 
 Install `deploy/ekphrasis-codex-vision.service` as `/etc/systemd/system/ekphrasis-codex-vision.service`, then enable it:
 

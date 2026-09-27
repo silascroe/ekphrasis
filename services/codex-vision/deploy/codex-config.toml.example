@@ -1,3 +1,2 @@
-# Install as /home/ekphrasis/.codex/config.toml.
-# Authenticate the service account with `codex login` separately.
+# This deployment reuses the authenticated Codex profile at /opt/domainpatrol/.codex.
 sandbox_mode = "read-only"

@@ -5,11 +5,14 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-User=ekphrasis
-Group=ekphrasis
-WorkingDirectory=/opt/ekphrasis/codex-vision
-EnvironmentFile=/etc/ekphrasis/codex-vision.env
-ExecStart=/opt/ekphrasis/codex-vision/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8787 --workers 1
+User=domainpatrol
+Group=domainpatrol
+WorkingDirectory=/opt/domainpatrol/ekphrasis-repair
+EnvironmentFile=/etc/ekphrasis-repair.env
+Environment=HOME=/opt/domainpatrol
+Environment=CODEX_HOME=/opt/domainpatrol/.codex
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+ExecStart=/opt/domainpatrol/ekphrasis-repair/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8787 --workers 1
 Restart=on-failure
 RestartSec=5
 UMask=0077
@@ -24,7 +27,7 @@ RestrictSUIDSGID=true
 LockPersonality=true
 CapabilityBoundingSet=
 AmbientCapabilities=
-ReadWritePaths=/home/ekphrasis/.cache /home/ekphrasis/.codex /home/ekphrasis/work
+ReadWritePaths=/opt/domainpatrol/.codex /opt/domainpatrol/ekphrasis-repair/work
 
 [Install]
 WantedBy=multi-user.target
