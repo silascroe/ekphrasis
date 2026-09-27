@@ -20,6 +20,8 @@ describe("museum adapters", () => {
     const results = await adapter.search("Starry Night");
     expect(String(fetcher.mock.calls[0]?.[0])).toContain("/public/collection/v1.1/search");
     expect(String(fetcher.mock.calls[0]?.[0])).toContain("limit=5");
+    expect(results[0].source.object_id).toBe("1");
+    expect(results[0].source.license?.status).toBe("unknown");
     expect(results[0].artwork.style).toBeNull();
     expect(results[0].artwork.year).toBe("1889");
   });
@@ -28,6 +30,7 @@ describe("museum adapters", () => {
     const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({
       response: {
         rows: [{
+          id: "edanmdm-test",
           title: "Example Painting",
           content: {
             descriptiveNonRepeating: {
@@ -46,6 +49,7 @@ describe("museum adapters", () => {
     })));
     const adapter = new SmithsonianAdapter(fetcher as typeof fetch, "test-key");
     const result = await adapter.search("Example Painting");
+    expect(result[0].source.object_id).toBe("edanmdm-test");
     expect(result[0].source.image_url).toBe("https://ids.si.edu/example.jpg");
     expect(result[0].source.url).toBe("https://example.si.edu/object/1");
     expect(result[0].artwork.year).toBe("1889");
@@ -66,6 +70,7 @@ describe("museum adapters", () => {
     })));
     const adapter = new ArticAdapter(fetcher as typeof fetch);
     const result = await adapter.search("Example");
+    expect(result[0].source.object_id).toBe("10");
     expect(result[0].artwork.style).toBe("Impressionism");
   });
 
