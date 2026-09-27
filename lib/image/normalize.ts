@@ -11,7 +11,7 @@ export type NormalizedImage = {
 const MAX_VISION_DIMENSION = 1600;
 
 export async function normalizeImage(upload: ValidatedUpload): Promise<NormalizedImage> {
-  const image = sharp(upload.bytes, { failOn: "error" })
+  const image = sharp(upload.decodedBytes ?? upload.bytes, { failOn: "error" })
     .rotate()
     .resize({
       width: MAX_VISION_DIMENSION,
