@@ -56,7 +56,6 @@ type UploadContext = {
   originalFilename: string;
   originalMimeType: string | null;
   originalSize: number;
-  originalLastModified: number | null;
   embedded?: {
     title?: string;
     description?: string;
@@ -65,16 +64,15 @@ type UploadContext = {
     subject?: string;
     documentName?: string;
     comment?: string;
-    software?: string;
   };
 };
 ```
 
 Embedded metadata extraction is best-effort and non-blocking. Failure to parse metadata must never reject an otherwise valid image.
 
-Use a browser-capable metadata parser with explicit field selection. Do not forward the raw metadata object.
+Use `exifr` in the browser with explicit tag selection. Do not forward the raw metadata object.
 
-Never collect or forward GPS coordinates, device serial/identifier fields, camera owner names, or arbitrary location metadata.
+Never collect or forward GPS coordinates, device serial/identifier fields, camera owner names, capture timestamps, camera make/model, or arbitrary location metadata. Those fields do not help identify the artwork and can leak private information or mislead the model about the artwork's date.
 
 ## 6. Cache semantics
 
@@ -82,10 +80,10 @@ Because filename/embedded metadata can affect candidate generation, the vision c
 
 The cache key should be derived from:
 
-- prepared/original upload bytes currently used by the server-side hash boundary; plus
-- a deterministic serialization of the whitelisted identification context.
+- the exact image bytes received by `/api/identify`; plus
+- a deterministic serialization of `originalFilename`, `originalMimeType`, and the whitelisted embedded identification fields.
 
-The serialization must exclude timestamps or fields that do not help identification if they would unnecessarily destroy cache reuse.
+`originalSize` is transported for diagnostics but is excluded from the cache key. No timestamp or location field participates in caching.
 
 ## 7. TypeScript vision boundary
 
@@ -164,7 +162,10 @@ Responsibilities:
 - create per-request temporary directory;
 - write generated local image path;
 - build the fixed Codex prompt;
-- invoke Codex as a subprocess;
+- invoke Codex as an argument-array subprocess, never through `shell=True`;
+- attach the image with `codex exec --image`;
+- use `--output-schema` plus Python/Pydantic validation for structured output;
+- run Codex with `--ephemeral`, `--sandbox read-only`, and a per-request working directory;
 - enforce hard timeout;
 - validate structured output with Pydantic;
 - return JSON;
@@ -190,7 +191,7 @@ The fixed prompt should instruct it to:
 - return uncertainty rather than inventing an exact artist/title;
 - produce only the required structured result.
 
-The service controls the model/reasoning profile via configuration. The intended initial profile is the user's Luna Max Codex configuration.
+The service controls the model/reasoning profile via configuration. The intended initial profile is the user's Luna Max Codex configuration. The exact CLI model/profile value is deployment configuration rather than application data and must be verified against the installed Codex configuration before service installation.
 
 ## 11. Codex response contract
 
@@ -220,6 +221,12 @@ Rules:
 - downstream museum evidence remains authoritative for museum-held works.
 
 The TypeScript adapter maps `artist/title/year/medium/candidates` to the existing `VisionDetection` structure. The extra research fields may be logged or retained for diagnostics but do not bypass current matching rules.
+
+### Known version-1 limitation
+
+A correct Codex identification can still produce public `NO_MATCH` when the artwork is not represented by any currently connected museum adapter. The Fernand Cormon auction example is the clearest case: Codex can find a defensible auction/catalogue identity while the current museum-only canonical gate has nothing to validate.
+
+This is intentionally left unchanged in version 1 because the agreed scope is to replace only the broken vision/candidate-generation stage. Allowing a corroborated non-museum Codex result to become a final public match is a separate product decision.
 
 ## 12. Time budget
 
