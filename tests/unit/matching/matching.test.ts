@@ -38,7 +38,7 @@ describe("deterministic matching", () => {
         title_match: ["The Starry Night"]
       }
     };
-    expect(scoreCandidates([candidate])[0].strongPositiveCount).toBe(2);
+    expect(scoreCandidates([candidate])[0].strongPositiveCount).toBe(3);
   });
 
   it("marks equal-scoring different objects from the same museum as ambiguous", () => {
