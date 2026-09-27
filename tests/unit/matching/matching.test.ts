@@ -18,6 +18,15 @@ describe("deterministic matching", () => {
     expect(evidence.date_match).toBe("UNAVAILABLE");
   });
 
+  it("treats museum artist display suffixes as equivalent rather than conflicting", () => {
+    const evidence = buildEvidence(
+      { title: "The Starry Night", artist: "Vincent van Gogh, Dutch, 1853–1890", year: "1889", medium: "Oil on canvas" },
+      { title: "Starry Night", artist: "Vincent van Gogh", year: "1889", medium: "oil on canvas" }
+    );
+    expect(evidence.artist_match).toBe("MATCH");
+    expect(evidence.title_match).toBe("MATCH");
+  });
+
   it("selects the same canonical source regardless of arrival order", () => {
     const a = base("met"); const b = base("aic");
     expect(selectCanonicalCandidate(scoreCandidates([a, b]), ["met", "aic"]).candidate?.source.id)
