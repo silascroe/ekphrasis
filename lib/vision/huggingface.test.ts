@@ -1,7 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
-import { HuggingFaceVisionAdapter } from "./huggingface";
+import { HuggingFaceVisionAdapter, resolveVisionModel } from "./huggingface";
 
 describe("HuggingFaceVisionAdapter", () => {
+  it("falls back to the default model when the configured value is blank", () => {
+    expect(resolveVisionModel("   ")).toBe("Qwen/Qwen2.5-VL-3B-Instruct");
+  });
+
+  it("uses a configured non-blank model", () => {
+    expect(resolveVisionModel(" custom/model ")).toBe("custom/model");
+  });
+
   it("turns structured VLM output into search candidates", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({
       choices: [{ message: { content: JSON.stringify({ artist: "Johannes Vermeer", title: "Girl with a Pearl Earring", year: "1665", medium: "oil on canvas", candidates: [{ text: "Johannes Vermeer" }, { text: "Girl with a Pearl Earring" }] }) } }]
