@@ -10,10 +10,7 @@ afterEach(() => {
 
 describe("identify API boundary", () => {
   it("rejects requests without an image", async () => {
-    const response = await POST(new Request("http://localhost/api/identify", {
-      method: "POST",
-      body: new FormData()
-    }));
+    const response = await POST({ formData: async () => new FormData() } as unknown as Request);
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({ state: "ERROR", error: "INVALID_IMAGE" });
   });
