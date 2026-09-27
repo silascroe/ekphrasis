@@ -4,7 +4,7 @@ import { ProviderError } from "../errors";
 export interface VisionAdapter { detect(image: Buffer): Promise<VisionDetection>; }
 type VisionLogger = (event: string, details: Record<string, unknown>) => void;
 type ChatResponse = { choices?: Array<{ message?: { content?: string | Array<{ type?: string; text?: string }> } }> };
-const DEFAULT_MODEL = "Qwen/Qwen2.5-VL-3B-Instruct";
+const DEFAULT_MODEL = "CohereLabs/aya-vision-32b:cohere";
 
 export function resolveVisionModel(value = process.env.HF_VISION_MODEL): string {
   return value?.trim() || DEFAULT_MODEL;
