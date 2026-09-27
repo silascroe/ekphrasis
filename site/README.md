@@ -28,3 +28,5 @@ Serve this directory with any static HTTP server, for example:
 Then open `http://localhost:4173`.
 
 GitHub Pages deploys this directory directly; no Node runtime or build step is required.
+Repository deployment target: `silascroe/ekphrasis-repair`.
+
