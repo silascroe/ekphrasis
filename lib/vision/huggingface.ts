@@ -4,7 +4,13 @@ import { ProviderError } from "../errors";
 export interface VisionAdapter { detect(image: Buffer): Promise<VisionDetection>; }
 type VisionLogger = (event: string, details: Record<string, unknown>) => void;
 type ChatResponse = { choices?: Array<{ message?: { content?: string | Array<{ type?: string; text?: string }> } }> };
-const MODEL = process.env.HF_VISION_MODEL ?? "Qwen/Qwen2.5-VL-3B-Instruct";
+const DEFAULT_MODEL = "Qwen/Qwen2.5-VL-3B-Instruct";
+
+export function resolveVisionModel(value = process.env.HF_VISION_MODEL): string {
+  return value?.trim() || DEFAULT_MODEL;
+}
+
+const MODEL = resolveVisionModel();
 const ENDPOINT = "https://router.huggingface.co/v1/chat/completions";
 const VISION_TIMEOUT_MS = 30_000;
 
