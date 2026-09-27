@@ -14,7 +14,14 @@ export class MetAdapter implements MuseumAdapter {
       this.id
     );
     return {
-      source: { id: this.id, name: this.name, image_url: stringOrNull(record.primaryImage), url: stringOrNull(record.objectURL) },
+      source: {
+        id: this.id,
+        name: this.name,
+        object_id: idOrNull(record.objectID),
+        image_url: stringOrNull(record.primaryImage),
+        url: stringOrNull(record.objectURL),
+        license: { status: record.isPublicDomain === true ? "public-domain" : "unknown", details: null }
+      },
       artwork: { title: stringOrNull(record.title), artist: stringOrNull(record.artistDisplayName), year: stringOrNull(record.objectDate), medium: stringOrNull(record.medium), style: null },
       evidence: emptyEvidence()
     };
@@ -35,7 +42,14 @@ export class MetAdapter implements MuseumAdapter {
       )
     ));
     return details.map(record => ({
-      source: { id: this.id, name: this.name, image_url: stringOrNull(record.primaryImage), url: stringOrNull(record.objectURL) },
+      source: {
+        id: this.id,
+        name: this.name,
+        object_id: idOrNull(record.objectID),
+        image_url: stringOrNull(record.primaryImage),
+        url: stringOrNull(record.objectURL),
+        license: { status: record.isPublicDomain === true ? "public-domain" : "unknown", details: null }
+      },
       artwork: {
         title: stringOrNull(record.title),
         artist: stringOrNull(record.artistDisplayName),
@@ -50,6 +64,10 @@ export class MetAdapter implements MuseumAdapter {
 
 function stringOrNull(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value : null;
+}
+function idOrNull(value: unknown): string | null {
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  return stringOrNull(value);
 }
 function emptyEvidence() {
   return { vision_text_match: "UNAVAILABLE", artist_match: "UNAVAILABLE", title_match: "UNAVAILABLE", date_match: "UNAVAILABLE", medium_match: "UNAVAILABLE", image_similarity: "UNAVAILABLE" } as const;
