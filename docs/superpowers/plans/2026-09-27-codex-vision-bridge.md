@@ -290,6 +290,7 @@ Assert:
 - the original user filename appears only in prompt/context and is never used as the generated filesystem path;
 - prompt explicitly stops after minimal authoritative verification for obvious/directly corroborated identities;
 - timeout kills the subprocess and maps to a timeout error;
+- timeout/cancellation terminates the Codex process group so tool descendants do not outlive the request;
 - invalid output JSON/schema maps to provider failure;
 - temp directory is gone after success, invalid output, and timeout.
 

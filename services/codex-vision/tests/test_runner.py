@@ -1,6 +1,7 @@
 import asyncio
 import base64
 import json
+import signal
 from pathlib import Path
 
 import pytest
@@ -109,6 +110,7 @@ async def test_invokes_codex_with_fixed_flags_and_cleans_generated_files(monkeyp
     assert "The_Work.jpg" not in str(image_path)
     assert "shell" not in call["kwargs"]
     assert "EKPHRASIS_AGENT_SECRET" not in call["kwargs"]["env"]
+    assert call["kwargs"]["start_new_session"] is True
     assert not cwd.exists()
 
 
@@ -136,6 +138,8 @@ async def test_timeout_kills_codex_and_removes_temp_directory(monkeypatch, tmp_p
     call = {}
 
     class SlowProcess(FakeProcess):
+        pid = 4321
+
         def __init__(self):
             self.killed = False
 
@@ -150,6 +154,13 @@ async def test_timeout_kills_codex_and_removes_temp_directory(monkeypatch, tmp_p
             self.killed = True
 
     process = SlowProcess()
+    killed_groups = []
+
+    def fake_killpg(pid, sig):
+        killed_groups.append((pid, sig))
+        process.killed = True
+
+    monkeypatch.setattr("app.codex_runner.os.killpg", fake_killpg)
 
     async def fake_exec(*_args, **kwargs):
         call["cwd"] = Path(kwargs["cwd"])
@@ -161,4 +172,5 @@ async def test_timeout_kills_codex_and_removes_temp_directory(monkeypatch, tmp_p
         await identify_with_codex(request(), settings(tmp_path, timeout=0.01))
 
     assert process.killed
+    assert killed_groups == [(process.pid, signal.SIGKILL)]
     assert not call["cwd"].exists()

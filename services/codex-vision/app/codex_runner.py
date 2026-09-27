@@ -6,6 +6,7 @@ import binascii
 import json
 import logging
 import os
+import signal
 import tempfile
 from pathlib import Path
 
@@ -55,7 +56,11 @@ def _codex_environment() -> dict[str, str]:
 
 async def _kill_and_reap(process) -> None:
     try:
-        process.kill()
+        pid = getattr(process, "pid", None)
+        if pid is None:
+            process.kill()
+        else:
+            os.killpg(pid, signal.SIGKILL)
     except ProcessLookupError:
         pass
     try:
@@ -107,6 +112,7 @@ async def identify_with_codex(request: IdentifyRequest, settings: Settings) -> I
                     *argv,
                     cwd=str(workdir),
                     env=_codex_environment(),
+                    start_new_session=True,
                     stdout=asyncio.subprocess.DEVNULL,
                     stderr=asyncio.subprocess.DEVNULL,
                 )
