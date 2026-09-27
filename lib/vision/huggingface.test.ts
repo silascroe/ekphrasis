@@ -44,4 +44,24 @@ describe("HuggingFaceVisionAdapter", () => {
     expect(log.mock.calls.flat().join(" ")).not.toContain("hf_secret");
     fetchMock.mockRestore();
   });
+
+  it("logs a bounded provider error message for failed upstream responses", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ error: "Model is unavailable for routed inference" }), {
+        status: 503,
+        headers: { "Content-Type": "application/json" }
+      })
+    );
+    const log = vi.fn();
+
+    await expect(new HuggingFaceVisionAdapter("hf_secret", log).detect(Buffer.from("image")))
+      .rejects.toMatchObject({ provider: "vision", failure: "PROVIDER_ERROR" });
+
+    expect(log).toHaveBeenCalledWith("vision.response", expect.objectContaining({
+      status: 503,
+      providerMessage: "Model is unavailable for routed inference"
+    }));
+    expect(log.mock.calls.flat().join(" ")).not.toContain("hf_secret");
+    fetchMock.mockRestore();
+  });
 });
