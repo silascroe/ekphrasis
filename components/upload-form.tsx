@@ -3,7 +3,12 @@
 import { useRef, useState } from "react";
 import type { IdentificationResult } from "../lib/types";
 
-export function UploadForm({ onResult }: { onResult: (result: IdentificationResult) => void }) {
+type UploadFormProps = {
+  onResult: (result: IdentificationResult) => void;
+  onStart?: () => void;
+};
+
+export function UploadForm({ onResult, onStart }: UploadFormProps) {
   const [busy, setBusy] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -12,6 +17,8 @@ export function UploadForm({ onResult }: { onResult: (result: IdentificationResu
       onResult({ state: "ERROR", error: "UNSUPPORTED_INPUT" });
       return;
     }
+
+    onStart?.();
     setBusy(true);
     try {
       const form = new FormData();
