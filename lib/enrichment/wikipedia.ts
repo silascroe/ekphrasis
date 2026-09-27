@@ -38,6 +38,9 @@ export async function fetchWikipedia(title: string): Promise<WikipediaArticle | 
     };
   } catch (error) {
     if (error instanceof ProviderError) throw error;
+    if (error instanceof DOMException && (error.name === "AbortError" || error.name === "TimeoutError")) {
+      throw new ProviderError("wikipedia", "TIMEOUT", "Wikipedia request timed out.");
+    }
     throw new ProviderError("wikipedia", "NETWORK", "Wikipedia request failed.");
   } finally {
     clearTimeout(timer);
