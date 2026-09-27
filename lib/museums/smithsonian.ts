@@ -17,7 +17,14 @@ export class SmithsonianAdapter implements MuseumAdapter {
     const record = json.response?.rows?.[0];
     if (!record) return null;
     return {
-      source: { id: this.id, name: this.name, image_url: extractImage(record), url: extractRecordUrl(record) },
+      source: {
+        id: this.id,
+        name: this.name,
+        object_id: idOrNull(record.id),
+        image_url: extractImage(record),
+        url: extractRecordUrl(record),
+        license: { status: "unknown", details: null }
+      },
       artwork: { title: extractTitle(record), artist: null, year: extractYear(record), medium: extractMedium(record), style: null },
       evidence: emptyEvidence()
     };
@@ -34,8 +41,10 @@ export class SmithsonianAdapter implements MuseumAdapter {
       source: {
         id: this.id,
         name: this.name,
+        object_id: idOrNull(record.id),
         image_url: extractImage(record),
-        url: extractRecordUrl(record)
+        url: extractRecordUrl(record),
+        license: { status: "unknown", details: null }
       },
       artwork: {
         title: extractTitle(record),
@@ -94,4 +103,8 @@ function asRecord(value: unknown): Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value) ? value as Record<string, unknown> : {};
 }
 function stringOrNull(value: unknown): string | null { return typeof value === "string" && value.trim() ? value : null; }
+function idOrNull(value: unknown): string | null {
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  return stringOrNull(value);
+}
 function emptyEvidence() { return { vision_text_match: "UNAVAILABLE", artist_match: "UNAVAILABLE", title_match: "UNAVAILABLE", date_match: "UNAVAILABLE", medium_match: "UNAVAILABLE", image_similarity: "UNAVAILABLE" } as const; }
