@@ -16,14 +16,23 @@ export function UploadForm({ onResult, onStart }: UploadFormProps) {
   async function submit(file: File) {
     onStart?.();
     setBusy(true);
+
+    let prepared: File;
     try {
-      const prepared = await prepareUploadFile(file);
+      prepared = await prepareUploadFile(file);
+    } catch {
+      onResult({ state: "ERROR", error: "UNSUPPORTED_INPUT" });
+      setBusy(false);
+      return;
+    }
+
+    try {
       const form = new FormData();
       form.append("image", prepared);
       const response = await fetch("/api/identify", { method: "POST", body: form });
       onResult(await response.json() as IdentificationResult);
     } catch {
-      onResult({ state: "ERROR", error: "UNSUPPORTED_INPUT" });
+      onResult({ state: "ERROR", error: "PROCESSING_FAILED" });
     } finally {
       setBusy(false);
     }
