@@ -163,6 +163,7 @@ Responsibilities:
 - write generated local image path;
 - build the fixed Codex prompt;
 - invoke Codex as an argument-array subprocess, never through `shell=True`;
+- enable Codex live web search with the CLI `--search` flag;
 - attach the image with `codex exec --image`;
 - use `--output-schema` plus Python/Pydantic validation for structured output;
 - run Codex with `--ephemeral`, `--sandbox read-only`, and a per-request working directory;
@@ -182,6 +183,7 @@ Codex is a reasoning/research component, not the workflow owner.
 
 The fixed prompt should instruct it to:
 
+- stop early when an exact identity is already strongly supported: if filename/metadata/signature/iconic composition yields a specific candidate, perform only the minimum authoritative verification needed and return rather than exhaustively checking alternatives;
 - identify the specific artwork, not merely describe subject/style;
 - use original filename and supplied safe metadata as legitimate clues;
 - inspect visible signatures, labels, inscriptions, and composition;
@@ -234,14 +236,14 @@ The current Vercel function architecture is synchronous. Vercel Functions have a
 
 For version 1:
 
-- Codex subprocess hard timeout: 180 seconds;
-- droplet endpoint deadline: about 195 seconds;
-- Vercel adapter timeout: about 205 seconds;
-- leave the remaining function budget for museum search, scoring, enrichment, and response handling.
+- Codex subprocess timeout is configurable with `CODEX_TIMEOUT_SECONDS`, default 240 seconds;
+- droplet endpoint deadline: about 250 seconds;
+- Vercel adapter timeout: about 260 seconds;
+- `POST /api/identify` declares `maxDuration = 300` seconds so the existing museum search, scoring, enrichment, and response handling retain headroom.
 
-A timeout is a provider failure, not permission to guess.
+A timeout is a provider failure, not permission to guess. Luna Max has been observed taking several minutes on hard identifications, so the prompt must explicitly short-circuit obvious and already-corroborated cases instead of spending Max effort proving the obvious.
 
-If real usage shows that Luna Max regularly needs longer than this, the next architecture change should be an asynchronous job/status flow rather than simply increasing arbitrary timeouts.
+If real usage shows that important hard cases regularly need more than the synchronous Vercel budget, the next architecture change should be an asynchronous job/status flow rather than simply increasing arbitrary timeouts.
 
 ## 13. Concurrency and quota protection
 
