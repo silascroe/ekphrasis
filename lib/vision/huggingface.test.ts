@@ -3,7 +3,7 @@ import { HuggingFaceVisionAdapter, resolveVisionModel } from "./huggingface";
 
 describe("HuggingFaceVisionAdapter", () => {
   it("falls back to the default model when the configured value is blank", () => {
-    expect(resolveVisionModel("   ")).toBe("CohereLabs/aya-vision-32b:cohere");
+    expect(resolveVisionModel("   ")).toBe("CohereLabs/command-a-vision-07-2025:cohere");
   });
 
   it("uses a configured non-blank model", () => {
@@ -23,6 +23,12 @@ describe("HuggingFaceVisionAdapter", () => {
       medium: "oil on canvas"
     });
     expect(fetchMock).toHaveBeenCalledOnce();
+    const request = fetchMock.mock.calls[0]?.[1];
+    const body = JSON.parse(String(request?.body));
+    expect(body.response_format).toMatchObject({
+      type: "json_schema",
+      json_schema: { name: "artwork_identification", strict: true }
+    });
     fetchMock.mockRestore();
   });
 
