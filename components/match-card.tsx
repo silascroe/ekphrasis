@@ -5,6 +5,7 @@ export function MatchCard({ result }: { result: Extract<IdentificationResult, { 
   return (
     <article>
       {result.source.image_url ? <img src={result.source.image_url} alt={result.artwork.title ?? "Artwork"} /> : null}
+      <h2>{result.artwork.title ?? "Untitled artwork"}</h2>
       <p><span>Artist</span> · {result.artwork.artist ?? "Unknown artist"}</p>
       <p><span>Year</span> · {result.artwork.year ?? "Date unknown"}</p>
       <p><span>Medium</span> · {result.artwork.medium ?? "Medium unavailable"}</p>

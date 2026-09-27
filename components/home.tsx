@@ -23,14 +23,22 @@ export function Home({
     setState(next.state);
   }
 
+  function reset() {
+    setResult(undefined);
+    setState("IDLE");
+  }
+
   return (
     <main className="ekphrasis-shell">
       <header><p>Ekphrasis</p><h1>Identify your artwork</h1></header>
-      {state === "IDLE" ? <UploadForm onResult={handleResult} /> : null}
+      {state === "IDLE" ? <UploadForm onStart={() => setState("PROCESSING")} onResult={handleResult} /> : null}
       {state === "PROCESSING" ? <ProcessingState /> : null}
       {result?.state === "MATCH" ? <MatchCard result={result} /> : null}
       {result?.state === "NO_MATCH" ? <NoMatch degraded={result.degraded} /> : null}
       {result?.state === "ERROR" ? <ErrorState code={result.error} /> : null}
+      {state !== "IDLE" && state !== "PROCESSING" ? (
+        <button type="button" onClick={reset}>Try another photo</button>
+      ) : null}
     </main>
   );
 }

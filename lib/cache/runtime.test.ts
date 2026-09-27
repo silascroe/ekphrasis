@@ -1,8 +1,25 @@
 import { describe, expect, it } from "vitest";
-import { ResilientResultCache } from "./runtime";
+import { MemoryResultCache, ResilientResultCache } from "./runtime";
 import type { IdentificationResult } from "../types";
 
-const result = { state: "NO_MATCH" } as IdentificationResult;
+const result = { state: "NO_MATCH", reason: "insufficient_evidence", degraded: false, unavailable_sources: [] } as IdentificationResult;
+
+describe("MemoryResultCache", () => {
+  it("expires degraded results according to the cache policy", async () => {
+    let now = 1_000;
+    const cache = new MemoryResultCache(() => now);
+    const degraded: IdentificationResult = {
+      state: "NO_MATCH",
+      reason: "insufficient_evidence",
+      degraded: true,
+      unavailable_sources: ["met"]
+    };
+
+    await cache.set("a", degraded);
+    now += 15 * 60 * 1000 + 1;
+    expect(await cache.get("a")).toBeNull();
+  });
+});
 
 describe("ResilientResultCache", () => {
   it("falls back when the primary cache fails", async () => {

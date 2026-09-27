@@ -2,20 +2,33 @@
 
 import { useRef, useState } from "react";
 import type { IdentificationResult } from "../lib/types";
+import { prepareUploadFile } from "../lib/image/client";
 
-export function UploadForm({ onResult }: { onResult: (result: IdentificationResult) => void }) {
+type UploadFormProps = {
+  onResult: (result: IdentificationResult) => void;
+  onStart?: () => void;
+};
+
+export function UploadForm({ onResult, onStart }: UploadFormProps) {
   const [busy, setBusy] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   async function submit(file: File) {
-    if (file.size > 10 * 1024 * 1024) {
+    onStart?.();
+    setBusy(true);
+
+    let prepared: File;
+    try {
+      prepared = await prepareUploadFile(file);
+    } catch {
       onResult({ state: "ERROR", error: "UNSUPPORTED_INPUT" });
+      setBusy(false);
       return;
     }
-    setBusy(true);
+
     try {
       const form = new FormData();
-      form.append("image", file);
+      form.append("image", prepared);
       const response = await fetch("/api/identify", { method: "POST", body: form });
       onResult(await response.json() as IdentificationResult);
     } catch {

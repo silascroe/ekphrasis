@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { Home } from "../../components/home";
 
 afterEach(() => cleanup());
@@ -26,7 +26,7 @@ describe("result states", () => {
     expect(screen.getByRole("link", { name: "Example.org" })).toBeTruthy();
   });
 
-  it("shows medium with artist and year and hides style when absent", () => {
+  it("shows title and provenance fields and hides style when absent", () => {
     render(<Home initialState="MATCH" result={{
       state: "MATCH",
       confidence: "high",
@@ -38,9 +38,22 @@ describe("result states", () => {
       degraded: false,
       unavailable_sources: []
     }} />);
+    expect(screen.getByRole("heading", { name: "Example" })).toBeTruthy();
     expect(screen.getAllByText("Artist")[0]).toBeTruthy();
     expect(screen.getByText(/1900/)).toBeTruthy();
     expect(screen.getByText(/Oil on canvas/)).toBeTruthy();
     expect(screen.queryByText("Style")).toBeNull();
+  });
+
+  it("lets users start over after a terminal result", () => {
+    render(<Home initialState="NO_MATCH" result={{
+      state: "NO_MATCH",
+      reason: "insufficient_evidence",
+      degraded: false,
+      unavailable_sources: []
+    }} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /try another photo/i }));
+    expect(screen.getByRole("button", { name: /choose a photo/i })).toBeTruthy();
   });
 });

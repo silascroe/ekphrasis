@@ -3,7 +3,7 @@ import type { ResultCache } from "../cache/cache";
 import { sha256 } from "../cache/cache";
 import { validateUpload, type ValidatedUpload } from "../image/validate";
 import { normalizeImage, type NormalizedImage } from "../image/normalize";
-import { extractSearchCandidates } from "../candidates/extract";
+import { extractSearchCandidates, type ExtractedArtwork } from "../candidates/extract";
 import type { VisionAdapter } from "../vision/huggingface";
 import type { MuseumAdapter } from "../museums/types";
 import { searchMuseums } from "../museums/search";
@@ -53,7 +53,22 @@ function dateMatches(value: string | null, queries: string[]): string[] {
   );
 }
 
-export function evidenceCandidates(candidates: ArtworkCandidate[], queries: string[]): ArtworkCandidate[] {
+export function evidenceCandidates(
+  candidates: ArtworkCandidate[],
+  queries: string[],
+  extracted: ExtractedArtwork = {}
+): ArtworkCandidate[] {
+  const compare = (
+    candidateValue: string | null,
+    extractedValue: string | null | undefined,
+    support: string[],
+    predicate: (left: string, right: string) => boolean
+  ) => {
+    if (!candidateValue) return "UNAVAILABLE" as const;
+    if (extractedValue) return predicate(candidateValue, extractedValue) ? "MATCH" as const : "MISMATCH" as const;
+    return support.length ? "MATCH" as const : "UNAVAILABLE" as const;
+  };
+
   return candidates.map(candidate => {
     const titleSupport = textMatches(candidate.artwork.title, queries);
     const artistSupport = textMatches(candidate.artwork.artist, queries);
@@ -64,10 +79,10 @@ export function evidenceCandidates(candidates: ArtworkCandidate[], queries: stri
       ...candidate,
       evidence: {
         vision_text_match: "UNAVAILABLE",
-        title_match: titleSupport.length ? "MATCH" : "UNAVAILABLE",
-        artist_match: artistSupport.length ? "MATCH" : "UNAVAILABLE",
-        date_match: dateSupport.length ? "MATCH" : "UNAVAILABLE",
-        medium_match: mediumSupport.length ? "MATCH" : "UNAVAILABLE",
+        title_match: compare(candidate.artwork.title, extracted.title, titleSupport, equivalentText),
+        artist_match: compare(candidate.artwork.artist, extracted.artist, artistSupport, equivalentText),
+        date_match: compare(candidate.artwork.year, extracted.year, dateSupport, equivalentDate),
+        medium_match: compare(candidate.artwork.medium, extracted.medium, mediumSupport, equivalentText),
         image_similarity: "UNAVAILABLE"
       },
       evidence_support: {
@@ -133,7 +148,7 @@ export async function identifyImage(request: IdentifyRequest, deps: IdentifyDeps
     const detection = await deps.vision.detect(image.bytes);
     const queries = extractSearchCandidates(detection);
     const museumResult = await searchMuseums(deps.museums, queries);
-    let candidates = evidenceCandidates(museumResult.candidates, queries);
+    let candidates = evidenceCandidates(museumResult.candidates, queries, detection.extracted);
     let selection = selectCanonicalCandidate(scoreCandidates(candidates), ["met", "rijksmuseum", "aic", "smithsonian"]);
 
     if (!selection.candidate && deps.clip) {
@@ -145,7 +160,7 @@ export async function identifyImage(request: IdentifyRequest, deps: IdentifyDeps
           deps.clip.qdrant,
           refs => hydrateClipRefs(refs, deps)
         );
-        candidates = evidenceCandidates(fallback, queries);
+        candidates = evidenceCandidates(fallback, queries, detection.extracted);
         selection = selectCanonicalCandidate(scoreCandidates(candidates), ["met", "rijksmuseum", "aic", "smithsonian"]);
       } catch {
         // Qdrant/CLIP is non-critical; continue to NO_MATCH.

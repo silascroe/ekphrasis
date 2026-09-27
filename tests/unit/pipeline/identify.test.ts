@@ -3,42 +3,55 @@ import type { IdentificationResult } from "../../../lib/types";
 import { evidenceCandidates, identifyImage } from "../../../lib/pipeline/identify";
 import { scoreCandidates } from "../../../lib/matching/score";
 
+const candidate = {
+  source: { id: "met", name: "The Met", image_url: null, url: null },
+  artwork: { title: "The Starry Night", artist: "Vincent van Gogh", year: "1889", medium: "Oil on canvas", style: null },
+  evidence: {
+    vision_text_match: "UNAVAILABLE" as const,
+    artist_match: "UNAVAILABLE" as const,
+    title_match: "UNAVAILABLE" as const,
+    date_match: "UNAVAILABLE" as const,
+    medium_match: "UNAVAILABLE" as const,
+    image_similarity: "UNAVAILABLE" as const
+  }
+};
+
 describe("identification pipeline", () => {
   it("maps independent Vision text candidates to title and artist evidence without false negatives", () => {
-    const [candidate] = evidenceCandidates([{
-      source: { id: "met", name: "The Met", image_url: null, url: null },
-      artwork: { title: "The Starry Night", artist: "Vincent van Gogh", year: "1889", medium: "Oil on canvas", style: null },
-      evidence: {
-        vision_text_match: "UNAVAILABLE",
-        artist_match: "UNAVAILABLE",
-        title_match: "UNAVAILABLE",
-        date_match: "UNAVAILABLE",
-        medium_match: "UNAVAILABLE",
-        image_similarity: "UNAVAILABLE"
-      }
-    }], ["The Starry Night", "Vincent van Gogh"]);
-    expect(candidate.evidence.title_match).toBe("MATCH");
-    expect(candidate.evidence.artist_match).toBe("MATCH");
-    expect(candidate.evidence.date_match).toBe("UNAVAILABLE");
-    expect(candidate.evidence.medium_match).toBe("UNAVAILABLE");
+    const [result] = evidenceCandidates([candidate], ["The Starry Night", "Vincent van Gogh"]);
+    expect(result.evidence.title_match).toBe("MATCH");
+    expect(result.evidence.artist_match).toBe("MATCH");
+    expect(result.evidence.date_match).toBe("UNAVAILABLE");
+    expect(result.evidence.medium_match).toBe("UNAVAILABLE");
   });
 
   it("does not count one Vision query as two independent evidence signals", () => {
-    const [candidate] = evidenceCandidates([{
-      source: { id: "met", name: "The Met", image_url: null, url: null },
-      artwork: { title: "Example", artist: "Example", year: null, medium: null, style: null },
-      evidence: {
-        vision_text_match: "UNAVAILABLE",
-        artist_match: "UNAVAILABLE",
-        title_match: "UNAVAILABLE",
-        date_match: "UNAVAILABLE",
-        medium_match: "UNAVAILABLE",
-        image_similarity: "UNAVAILABLE"
-      }
+    const [result] = evidenceCandidates([{
+      ...candidate,
+      artwork: { title: "Example", artist: "Example", year: null, medium: null, style: null }
     }], ["Example"]);
-    expect(candidate.evidence.title_match).toBe("MATCH");
-    expect(candidate.evidence.artist_match).toBe("MATCH");
-    expect(scoreCandidates([candidate])[0].strongPositiveCount).toBe(1);
+
+    expect(result.evidence.title_match).toBe("MATCH");
+    expect(result.evidence.artist_match).toBe("MATCH");
+    expect(scoreCandidates([result])[0].strongPositiveCount).toBe(1);
+  });
+
+  it("does not count multiple equivalent queries for one field as independent evidence", () => {
+    const [result] = evidenceCandidates([candidate], ["Starry Night", "The Starry Night"]);
+    expect(result.evidence.title_match).toBe("MATCH");
+    expect(scoreCandidates([result])[0].strongPositiveCount).toBe(1);
+  });
+
+  it("records a populated structured Vision conflict as a mismatch", () => {
+    const [result] = evidenceCandidates(
+      [candidate],
+      ["The Starry Night", "Pablo Picasso"],
+      { title: "The Starry Night", artist: "Pablo Picasso", year: null, medium: null }
+    );
+
+    expect(result.evidence.title_match).toBe("MATCH");
+    expect(result.evidence.artist_match).toBe("MISMATCH");
+    expect(scoreCandidates([result])[0].strongNegative).toBe(true);
   });
 
   it("rejects oversized uploads before reading or hashing them", async () => {
@@ -63,7 +76,10 @@ describe("identification pipeline", () => {
         limiter: { check: async () => ({ allowed: true }) },
         validate: async () => ({ bytes: Buffer.from("image"), format: "jpeg", width: 1, height: 1 }),
         normalize: async upload => ({ bytes: upload.bytes, mimeType: "image/jpeg", width: 1, height: 1 }),
-        vision: { detect: async () => ({ webDetection: { webEntities: [{ description: "Example" }, { description: "Artist" }] } }) },
+        vision: { detect: async () => ({
+          extracted: { title: "Example", artist: "Artist", year: null, medium: null },
+          webDetection: { webEntities: [{ description: "Example" }, { description: "Artist" }] }
+        }) },
         museums: [{
           id: "met",
           name: "The Met",

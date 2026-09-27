@@ -17,7 +17,14 @@ export class RijksmuseumAdapter implements MuseumAdapter {
     const artObject = typeof record.artObject === "object" && record.artObject ? record.artObject as Record<string, unknown> : record;
     const webImage = typeof artObject.webImage === "object" && artObject.webImage ? artObject.webImage as Record<string, unknown> : {};
     return {
-      source: { id: this.id, name: this.name, image_url: stringOrNull(webImage.url), url: stringOrNull(artObject.links && typeof artObject.links === "object" ? (artObject.links as Record<string, unknown>).web : null) },
+      source: {
+        id: this.id,
+        name: this.name,
+        object_id: stringOrNull(artObject.objectNumber) ?? stringOrNull(artObject.id),
+        image_url: stringOrNull(webImage.url),
+        url: stringOrNull(artObject.links && typeof artObject.links === "object" ? (artObject.links as Record<string, unknown>).web : null),
+        license: { status: "unknown", details: null }
+      },
       artwork: { title: stringOrNull(artObject.title), artist: stringOrNull(artObject.principalOrFirstMaker), year: stringOrNull(artObject.dating && typeof artObject.dating === "object" ? (artObject.dating as Record<string, unknown>).presentingDate : null), medium: null, style: null },
       evidence: emptyEvidence()
     };
@@ -33,7 +40,14 @@ export class RijksmuseumAdapter implements MuseumAdapter {
     return (json.artObjects ?? []).map(record => {
       const webImage = typeof record.webImage === "object" && record.webImage ? record.webImage as Record<string, unknown> : {};
       return {
-        source: { id: this.id, name: this.name, image_url: stringOrNull(webImage.url), url: stringOrNull(record.links && typeof record.links === "object" ? (record.links as Record<string, unknown>).web : null) },
+        source: {
+          id: this.id,
+          name: this.name,
+          object_id: stringOrNull(record.objectNumber) ?? stringOrNull(record.id),
+          image_url: stringOrNull(webImage.url),
+          url: stringOrNull(record.links && typeof record.links === "object" ? (record.links as Record<string, unknown>).web : null),
+          license: { status: "unknown", details: null }
+        },
         artwork: { title: stringOrNull(record.title), artist: stringOrNull(record.principalOrFirstMaker), year: null, medium: null, style: null },
         evidence: emptyEvidence()
       };
