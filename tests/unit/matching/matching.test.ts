@@ -43,7 +43,11 @@ describe("deterministic matching", () => {
 
   it("marks equal-scoring different objects from the same museum as ambiguous", () => {
     const a = { ...base("met"), source: { ...base("met").source, object_id: "1" } };
-    const b = { ...base("met"), source: { ...base("met").source, object_id: "2" } };
+    const b = {
+      ...base("met"),
+      source: { ...base("met").source, object_id: "2" },
+      artwork: { ...base("met").artwork, title: "A Different Painting" }
+    };
     const selection = selectCanonicalCandidate(scoreCandidates([a, b]), ["met"]);
     expect(selection.ambiguous).toBe(true);
     expect(selection.confidence).toBe("medium");
