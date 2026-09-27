@@ -110,7 +110,6 @@ export class HuggingFaceVisionAdapter implements VisionAdapter {
               medium: { type: ["string", "null"] },
               candidates: {
                 type: "array",
-                maxItems: 8,
                 items: {
                   type: "object",
                   properties: { text: { type: "string" } },
