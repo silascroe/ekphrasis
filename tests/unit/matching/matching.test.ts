@@ -41,6 +41,14 @@ describe("deterministic matching", () => {
     expect(scoreCandidates([candidate])[0].strongPositiveCount).toBe(2);
   });
 
+  it("marks equal-scoring different objects from the same museum as ambiguous", () => {
+    const a = { ...base("met"), source: { ...base("met").source, object_id: "1" } };
+    const b = { ...base("met"), source: { ...base("met").source, object_id: "2" } };
+    const selection = selectCanonicalCandidate(scoreCandidates([a, b]), ["met"]);
+    expect(selection.ambiguous).toBe(true);
+    expect(selection.confidence).toBe("medium");
+  });
+
   it("selects the same canonical source regardless of arrival order", () => {
     const a = base("met"); const b = base("aic");
     expect(selectCanonicalCandidate(scoreCandidates([a, b]), ["met", "aic"]).candidate?.source.id)
