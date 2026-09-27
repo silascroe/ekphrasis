@@ -1,4 +1,4 @@
-import { describe, expect, it, afterEach } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { getRateLimitSecret } from "./secret";
 
 const original = { ...process.env };
@@ -8,10 +8,17 @@ afterEach(() => {
 });
 
 describe("getRateLimitSecret", () => {
-  it("falls back to HF_TOKEN when RATE_LIMIT_HMAC_SECRET is missing", () => {
+  it("does not reuse provider credentials as the rate-limit secret", () => {
     delete process.env.RATE_LIMIT_HMAC_SECRET;
     process.env.HF_TOKEN = "hf-test-secret";
 
-    expect(getRateLimitSecret()).toBe("hf-test-secret");
+    expect(getRateLimitSecret()).toBeUndefined();
+  });
+
+  it("returns the dedicated HMAC secret when configured", () => {
+    process.env.RATE_LIMIT_HMAC_SECRET = "rate-limit-secret";
+    process.env.HF_TOKEN = "hf-test-secret";
+
+    expect(getRateLimitSecret()).toBe("rate-limit-secret");
   });
 });
