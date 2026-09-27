@@ -23,7 +23,7 @@ export class MetAdapter implements MuseumAdapter {
   async search(query: string): Promise<ArtworkCandidate[]> {
     const search = await requestJson<{ objectIDs?: number[] }>(
       this.fetcher,
-      `https://collectionapi.metmuseum.org/public/collection/v1/search?q=${encodeURIComponent(query)}&hasImages=true`,
+      `https://collectionapi.metmuseum.org/public/collection/v1.1/search?q=${encodeURIComponent(query)}&hasImages=true&limit=5`,
       this.id
     );
     const ids = (search.objectIDs ?? []).slice(0, 5);
