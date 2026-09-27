@@ -3,7 +3,7 @@ import { HuggingFaceVisionAdapter, resolveVisionModel } from "./huggingface";
 
 describe("HuggingFaceVisionAdapter", () => {
   it("falls back to the default model when the configured value is blank", () => {
-    expect(resolveVisionModel("   ")).toBe("Qwen/Qwen2.5-VL-3B-Instruct");
+    expect(resolveVisionModel("   ")).toBe("CohereLabs/aya-vision-32b:cohere");
   });
 
   it("uses a configured non-blank model", () => {
