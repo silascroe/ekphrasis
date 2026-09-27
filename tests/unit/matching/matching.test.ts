@@ -27,6 +27,20 @@ describe("deterministic matching", () => {
     expect(evidence.title_match).toBe("MATCH");
   });
 
+  it("counts image similarity as its own independent dimension", () => {
+    const candidate = {
+      ...base("met"),
+      evidence: {
+        ...base("met").evidence,
+        image_similarity: "MATCH" as const
+      },
+      evidence_support: {
+        title_match: ["The Starry Night"]
+      }
+    };
+    expect(scoreCandidates([candidate])[0].strongPositiveCount).toBe(2);
+  });
+
   it("selects the same canonical source regardless of arrival order", () => {
     const a = base("met"); const b = base("aic");
     expect(selectCanonicalCandidate(scoreCandidates([a, b]), ["met", "aic"]).candidate?.source.id)
