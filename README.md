@@ -40,6 +40,12 @@ Repeated identical uploads use a SHA-256 result cache. Normal results use a 7-da
 
 Anonymous requests are rate-limited before recognition starts. The MVP uses 5 requests/minute and 30 requests/hour per privacy-preserving identity key.
 
+## Known incomplete integrations
+
+- The Rijksmuseum adapter still uses the legacy key-based collection API and needs migration to the current no-key Data Services / Linked Art workflow.
+- CLIP/Qdrant runtime plumbing exists, but the repository does not yet contain the promised corpus export, embedding/index build, validation, and promotion workflow.
+- Live Hugging Face, Redis, museum-key, and Qdrant paths still require environment-specific verification.
+
 ## Dashboard
 
 The GitHub Pages dashboard is fixture-driven documentation of the recognition architecture. It does not contain provider credentials and does not perform live identification.
