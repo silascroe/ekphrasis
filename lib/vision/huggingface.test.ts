@@ -8,6 +8,12 @@ describe("HuggingFaceVisionAdapter", () => {
     }), { status: 200, headers: { "Content-Type": "application/json" } }));
     const result = await new HuggingFaceVisionAdapter("hf_test").detect(Buffer.from("image"));
     expect(result.webDetection?.webEntities?.map(item => item.description)).toEqual(["Johannes Vermeer", "Girl with a Pearl Earring", "1665", "oil on canvas"]);
+    expect(result.extracted).toEqual({
+      artist: "Johannes Vermeer",
+      title: "Girl with a Pearl Earring",
+      year: "1665",
+      medium: "oil on canvas"
+    });
     expect(fetchMock).toHaveBeenCalledOnce();
     fetchMock.mockRestore();
   });
