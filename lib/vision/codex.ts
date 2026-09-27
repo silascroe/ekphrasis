@@ -175,7 +175,17 @@ export class CodexVisionAdapter implements VisionAdapter {
         original_filename: input.context.originalFilename,
         original_mime_type: input.context.originalMimeType,
         original_size: input.context.originalSize,
-        ...(input.context.embedded ? { embedded: input.context.embedded } : {})
+        ...(input.context.embedded ? {
+          embedded: {
+            title: input.context.embedded.title,
+            description: input.context.embedded.description,
+            artist: input.context.embedded.artist,
+            copyright: input.context.embedded.copyright,
+            subject: input.context.embedded.subject,
+            document_name: input.context.embedded.documentName,
+            comment: input.context.embedded.comment
+          }
+        } : {})
       } : null
     };
 

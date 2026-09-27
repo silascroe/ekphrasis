@@ -8,7 +8,7 @@ const context: UploadContext = {
   originalFilename: "The_Work_by_Painter.jpg",
   originalMimeType: "image/heic",
   originalSize: 2_400_000,
-  embedded: { title: "The Work", artist: "Painter" }
+  embedded: { title: "The Work", artist: "Painter", documentName: "Catalog Entry 73" }
 };
 
 function successResponse(): Response {
@@ -52,7 +52,7 @@ describe("CodexVisionAdapter", () => {
         original_filename: "The_Work_by_Painter.jpg",
         original_mime_type: "image/heic",
         original_size: 2_400_000,
-        embedded: { title: "The Work", artist: "Painter" }
+        embedded: { title: "The Work", artist: "Painter", document_name: "Catalog Entry 73" }
       }
     });
     expect(bodyText).not.toContain(secret);
