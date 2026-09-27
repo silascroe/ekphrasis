@@ -14,8 +14,28 @@ function parseDetection(raw: string): VisionDetection {
   if (!object) throw new ProviderError("vision", "INVALID_RESPONSE", "Vision response did not contain JSON.");
   try {
     const parsed = JSON.parse(object) as { candidates?: Array<{ text?: unknown }>; artist?: unknown; title?: unknown; year?: unknown; medium?: unknown };
-    const values = [...(Array.isArray(parsed.candidates) ? parsed.candidates.map(item => item?.text) : []), parsed.artist, parsed.title, parsed.year, parsed.medium].filter((value): value is string => typeof value === "string" && value.trim().length > 0);
-    return { webDetection: { webEntities: [...new Set(values)].map(description => ({ description })), bestGuessLabels: [] } };
+    const stringOrNull = (value: unknown): string | null =>
+      typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
+    const extracted = {
+      artist: stringOrNull(parsed.artist),
+      title: stringOrNull(parsed.title),
+      year: stringOrNull(parsed.year),
+      medium: stringOrNull(parsed.medium)
+    };
+    const values = [
+      ...(Array.isArray(parsed.candidates) ? parsed.candidates.map(item => item?.text) : []),
+      extracted.artist,
+      extracted.title,
+      extracted.year,
+      extracted.medium
+    ].filter((value): value is string => typeof value === "string" && value.trim().length > 0);
+    return {
+      extracted,
+      webDetection: {
+        webEntities: [...new Set(values)].map(description => ({ description })),
+        bestGuessLabels: []
+      }
+    };
   } catch { throw new ProviderError("vision", "INVALID_RESPONSE", "Vision response JSON was invalid."); }
 }
 
