@@ -7,7 +7,7 @@ export const demoRun = {
   },
   pipeline: [
     { key: "intake", label: "Image Intake", status: "complete", duration: "0.18s", summary: "Validated HEIC · SHA-256 cache key created" },
-    { key: "vision", label: "Hugging Face Vision", status: "complete", duration: "1.42s", summary: "Web entities + candidate text extracted" },
+    { key: "vision", label: "Hugging Face Vision", status: "complete", duration: "1.42s", summary: "Structured artwork candidates extracted" },
     { key: "candidates", label: "Candidate Extraction", status: "complete", duration: "0.09s", summary: "6 museum-search candidates normalized" },
     { key: "museums", label: "Museum Search", status: "complete", duration: "2.31s", summary: "4 primary sources queried in parallel" },
     { key: "matching", label: "Matching / Scoring", status: "complete", duration: "0.14s", summary: "Evidence gate passed · canonical source selected" },
