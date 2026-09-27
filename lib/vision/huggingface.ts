@@ -4,7 +4,7 @@ import { ProviderError } from "../errors";
 export interface VisionAdapter { detect(image: Buffer): Promise<VisionDetection>; }
 type VisionLogger = (event: string, details: Record<string, unknown>) => void;
 type ChatResponse = { choices?: Array<{ message?: { content?: string | Array<{ type?: string; text?: string }> } }> };
-const DEFAULT_MODEL = "CohereLabs/aya-vision-32b:cohere";
+const DEFAULT_MODEL = "CohereLabs/command-a-vision-07-2025:cohere";
 
 export function resolveVisionModel(value = process.env.HF_VISION_MODEL): string {
   return value?.trim() || DEFAULT_MODEL;
@@ -81,10 +81,52 @@ export class HuggingFaceVisionAdapter implements VisionAdapter {
     if (!this.token) throw new ProviderError("vision", "AUTH", "Hugging Face token is not configured.");
     const startedAt = Date.now();
     this.log("vision.start", { model: MODEL, bytes: image.byteLength, timeoutMs: VISION_TIMEOUT_MS });
-    const body = { model: MODEL, messages: [{ role: "user", content: [
-      { type: "text", text: "Identify this artwork for museum catalog search. Return ONLY JSON with keys artist, title, year, medium, candidates. Use null when unknown. candidates must be an array of up to 8 distinctive search phrases, including visible title/artist text and likely artwork identifiers. Do not invent exact metadata when uncertain." },
-      { type: "image_url", image_url: { url: "data:image/jpeg;base64," + image.toString("base64") } }
-    ] }], temperature: 0, max_tokens: 300 };
+    const body = {
+      model: MODEL,
+      messages: [{
+        role: "user",
+        content: [
+          {
+            type: "text",
+            text: "Identify this artwork for museum catalog search. Use null for metadata you cannot support from the image. Candidate phrases should be distinctive museum-search terms, not invented exact metadata."
+          },
+          {
+            type: "image_url",
+            image_url: { url: "data:image/jpeg;base64," + image.toString("base64") }
+          }
+        ]
+      }],
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "artwork_identification",
+          strict: true,
+          schema: {
+            type: "object",
+            properties: {
+              artist: { type: ["string", "null"] },
+              title: { type: ["string", "null"] },
+              year: { type: ["string", "null"] },
+              medium: { type: ["string", "null"] },
+              candidates: {
+                type: "array",
+                maxItems: 8,
+                items: {
+                  type: "object",
+                  properties: { text: { type: "string" } },
+                  required: ["text"],
+                  additionalProperties: false
+                }
+              }
+            },
+            required: ["artist", "title", "year", "medium", "candidates"],
+            additionalProperties: false
+          }
+        }
+      },
+      temperature: 0,
+      max_tokens: 500
+    };
     try {
       const response = await fetch(ENDPOINT, { method: "POST", headers: { Authorization: "Bearer " + this.token, "Content-Type": "application/json" }, body: JSON.stringify(body), signal: AbortSignal.timeout(VISION_TIMEOUT_MS) });
       const elapsedMs = Date.now() - startedAt;
