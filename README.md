@@ -19,7 +19,7 @@ The written architecture documents under `docs/superpowers/` describe the origin
 ## Local development
 
 1. Copy `.env.example` to `.env.local`.
-2. Set `HF_TOKEN`. For production-like rate limiting, also set `RATE_LIMIT_HMAC_SECRET`.
+2. Set `HF_TOKEN` and a separate `RATE_LIMIT_HMAC_SECRET` before exercising `/api/identify`.
 3. Add museum, Upstash, Qdrant, and CLIP credentials only for the integrations you intend to exercise.
 4. Install dependencies with `npm install`.
 5. Start the app with `npm run dev`.
