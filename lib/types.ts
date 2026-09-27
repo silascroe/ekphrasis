@@ -23,8 +23,13 @@ export type ArtworkCandidate = {
   source: {
     id: string;
     name: string;
+    object_id?: string | null;
     image_url: string | null;
     url: string | null;
+    license?: {
+      status: "public-domain" | "restricted" | "unknown";
+      details: string | null;
+    };
   };
   artwork: {
     title: string | null;
