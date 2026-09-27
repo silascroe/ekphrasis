@@ -74,6 +74,25 @@ describe("museum adapters", () => {
     expect(result[0].artwork.style).toBe("Impressionism");
   });
 
+  it("deduplicates the same museum object returned by multiple queries", async () => {
+    const record = {
+      source: { id: "met", name: "The Met", object_id: "123", image_url: null, url: null },
+      artwork: { title: "Example", artist: "Artist", year: null, medium: null, style: null },
+      evidence: {
+        vision_text_match: "UNAVAILABLE" as const,
+        artist_match: "UNAVAILABLE" as const,
+        title_match: "UNAVAILABLE" as const,
+        date_match: "UNAVAILABLE" as const,
+        medium_match: "UNAVAILABLE" as const,
+        image_similarity: "UNAVAILABLE" as const
+      }
+    };
+    const adapter = { id: "met", name: "The Met", search: vi.fn(async () => [record]) };
+
+    const result = await searchMuseums([adapter], ["one", "two"]);
+    expect(result.candidates).toEqual([record]);
+  });
+
   it("preserves successful queries when another query for the same museum fails", async () => {
     const record = {
       source: { id: "met", name: "The Met", image_url: null, url: null },
