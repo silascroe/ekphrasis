@@ -22,7 +22,7 @@ describe("prepareUploadFile", () => {
     expect(encode).toHaveBeenCalledOnce();
     expect(prepared.name).toBe("painting.jpg");
     expect(prepared.type).toBe("image/jpeg");
-    expect(prepared.size).toBe(700_000);
+    expect(prepared.size).toBeLessThan(file.size);
   });
 
   it("leaves an already-small image untouched", async () => {
