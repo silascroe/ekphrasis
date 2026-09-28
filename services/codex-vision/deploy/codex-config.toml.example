@@ -1,0 +1,2 @@
+# This deployment reuses the authenticated Codex profile at /opt/domainpatrol/.codex.
+sandbox_mode = "read-only"

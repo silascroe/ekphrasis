@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import type { IdentificationResult } from "../lib/types";
 import { prepareUploadFile } from "../lib/image/client";
+import { extractUploadContext, type UploadContext } from "../lib/image/upload-context";
 
 type UploadFormProps = {
   onResult: (result: IdentificationResult) => void;
@@ -18,7 +19,9 @@ export function UploadForm({ onResult, onStart }: UploadFormProps) {
     setBusy(true);
 
     let prepared: File;
+    let context: UploadContext;
     try {
+      context = await extractUploadContext(file);
       prepared = await prepareUploadFile(file);
     } catch {
       onResult({ state: "ERROR", error: "UNSUPPORTED_INPUT" });
@@ -29,6 +32,7 @@ export function UploadForm({ onResult, onStart }: UploadFormProps) {
     try {
       const form = new FormData();
       form.append("image", prepared);
+      form.append("context", JSON.stringify(context));
       const response = await fetch("/api/identify", { method: "POST", body: form });
       onResult(await response.json() as IdentificationResult);
     } catch {

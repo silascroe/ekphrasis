@@ -20,3 +20,8 @@ button:disabled { cursor: wait; opacity: .6; }
 }
 
 .confidence-indicator { margin-top: 12px; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; }
+.suggestion-card { border-top: 1px solid currentColor; padding-top: 18px; }
+.suggestion-label { font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; }
+.suggestion-card details { margin-top: 16px; }
+.suggestion-card summary { cursor: pointer; }
+.suggestion-card a { overflow-wrap: anywhere; }

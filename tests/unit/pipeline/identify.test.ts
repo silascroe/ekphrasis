@@ -110,6 +110,32 @@ describe("identification pipeline", () => {
     expect(result.state).toBe("MATCH");
   });
 
+  it("returns an explicitly unverified Codex suggestion when museum lookup has no confirmed match", async () => {
+    const result = await identifyImage(
+      { file: new File([new Uint8Array([1])], "mona-lisa.jpg", { type: "image/jpeg" }), address: "test" },
+      {
+        cache: { get: async () => null, set: async () => {} },
+        limiter: { check: async () => ({ allowed: true }) },
+        validate: async () => ({ bytes: Buffer.from("image"), format: "jpeg", width: 1, height: 1 }),
+        normalize: async upload => ({ bytes: upload.bytes, mimeType: "image/jpeg", width: 1, height: 1 }),
+        vision: { detect: async () => ({
+          extracted: { title: "Mona Lisa", artist: "Leonardo da Vinci", year: "c. 1503–1519", medium: "Oil on poplar", },
+          research: { confidence: "high", sourceUrls: ["https://www.louvre.fr/en/explore/the-palace/mona-lisa"], evidence: ["The portrait is identified as the Mona Lisa."] },
+          webDetection: { webEntities: [{ description: "Mona Lisa" }, { description: "Leonardo da Vinci" }] }
+        }) },
+        museums: [{ id: "met", name: "The Met", search: async () => [] }]
+      }
+    );
+
+    expect(result).toMatchObject({
+      state: "SUGGESTION",
+      confidence: "high",
+      artwork: { title: "Mona Lisa", artist: "Leonardo da Vinci" },
+      source_urls: ["https://www.louvre.fr/en/explore/the-palace/mona-lisa"],
+      unavailable_sources: []
+    });
+  });
+
   it("returns a cached result without invoking providers", async () => {
     const cached: IdentificationResult = { state: "NO_MATCH", reason: "insufficient_evidence", degraded: false, unavailable_sources: [] };
     const result = await identifyImage(

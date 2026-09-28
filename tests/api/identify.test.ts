@@ -10,10 +10,19 @@ afterEach(() => {
 
 describe("identify API boundary", () => {
   it("rejects requests without an image", async () => {
-    const response = await POST(new Request("http://localhost/api/identify", {
-      method: "POST",
-      body: new FormData()
-    }));
+    const response = await POST({ formData: async () => new FormData() } as unknown as Request);
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ state: "ERROR", error: "INVALID_IMAGE" });
+  });
+
+  it("rejects malformed upload context before initializing providers", async () => {
+    process.env.RATE_LIMIT_HMAC_SECRET = "test-secret";
+    const fields = new Map<string, unknown>([
+      ["image", { size: 1, arrayBuffer: async () => new ArrayBuffer(1) }],
+      ["context", "{not-json"]
+    ]);
+    const response = await POST({ formData: async () => ({ get: (key: string) => fields.get(key) ?? null }) } as unknown as Request);
+
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({ state: "ERROR", error: "INVALID_IMAGE" });
   });
@@ -22,10 +31,10 @@ describe("identify API boundary", () => {
     delete process.env.RATE_LIMIT_HMAC_SECRET;
     const response = await POST({
       formData: async () => ({
-        get: () => ({
+        get: (key: string) => key === "image" ? ({
           size: 1,
           arrayBuffer: async () => new ArrayBuffer(1)
-        })
+        }) : null
       })
     } as unknown as Request);
     expect(response.status).toBe(503);

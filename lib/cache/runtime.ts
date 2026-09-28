@@ -1,5 +1,5 @@
 import type { IdentificationResult } from "../types";
-import { cacheClassFor, ttlFor } from "../pipeline/cache-policy";
+import { cacheClassFor, cacheableResult, ttlFor } from "../pipeline/cache-policy";
 import type { ResultCache } from "./cache";
 
 type MemoryEntry = {
@@ -23,7 +23,7 @@ export class MemoryResultCache implements ResultCache {
   }
 
   async set(hash: string, result: IdentificationResult): Promise<void> {
-    const cacheClass = cacheClassFor(result);
+    const cacheClass = cacheClassFor(cacheableResult(result));
     if (cacheClass === "uncacheable") return;
     this.values.set(hash, {
       value: result,

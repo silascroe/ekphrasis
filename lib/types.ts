@@ -1,5 +1,5 @@
 export type EvidenceState = "MATCH" | "MISMATCH" | "UNAVAILABLE";
-export type PublicState = "MATCH" | "NO_MATCH" | "ERROR";
+export type PublicState = "MATCH" | "SUGGESTION" | "NO_MATCH" | "ERROR";
 export type Confidence = "high" | "medium" | "low";
 export type ProviderFailureClass =
   | "TIMEOUT"
@@ -59,6 +59,15 @@ export type IdentificationResult =
       state: "NO_MATCH";
       reason: "insufficient_evidence";
       degraded: boolean;
+      unavailable_sources: string[];
+    }
+  | {
+      state: "SUGGESTION";
+      confidence: Confidence;
+      artwork: ArtworkCandidate["artwork"];
+      candidates: string[];
+      source_urls: string[];
+      evidence: string[];
       unavailable_sources: string[];
     }
   | {

@@ -26,6 +26,24 @@ describe("result states", () => {
     expect(screen.getByRole("link", { name: "Example.org" })).toBeTruthy();
   });
 
+  it("labels Codex output as an unverified suggestion instead of a confirmed match", () => {
+    render(<Home initialState="SUGGESTION" result={{
+      state: "SUGGESTION",
+      confidence: "high",
+      artwork: { title: "Mona Lisa", artist: "Leonardo da Vinci", year: "c. 1503–1519", medium: "Oil on poplar", style: null },
+      candidates: ["Mona Lisa"],
+      source_urls: ["https://www.louvre.fr/en/explore/the-palace/mona-lisa"],
+      evidence: ["The portrait is identified as the Mona Lisa."],
+      unavailable_sources: ["rijksmuseum", "smithsonian"]
+    }} />);
+
+    expect(screen.getByRole("heading", { name: "Mona Lisa" })).toBeTruthy();
+    expect(screen.getByText("Unverified suggestion")).toBeTruthy();
+    expect(screen.getByText(/not a verified match/i)).toBeTruthy();
+    expect(screen.getByRole("link", { name: "www.louvre.fr" })).toBeTruthy();
+    expect(screen.queryByText(/Source ·/)).toBeNull();
+  });
+
   it("shows title and provenance fields and hides style when absent", () => {
     render(<Home initialState="MATCH" result={{
       state: "MATCH",
