@@ -389,11 +389,11 @@ As the service account, verify:
 
 Expected: valid strict JSON output. Verified on 2026-09-27 through the authenticated HTTPS endpoint using a public-domain Met image: Codex returned Vincent van Gogh, *Madame Roulin and Her Baby* (1888), with a Met source URL. The initial request exposed unsupported JSON Schema `format: uri`; the schema now uses an HTTPS URL pattern and the bridge's Pydantic response model continues to validate URLs.
 
-- [ ] **Step 3: Set Vercel Preview bridge environment variables and redeploy**
+- [x] **Step 3: Set Vercel Preview bridge environment variables and redeploy**
 
-Set `EKPHRASIS_AGENT_URL` and `EKPHRASIS_AGENT_SECRET` for the `feature/codex-vision-bridge` Preview environment only, then redeploy the GitHub-connected project. Keep Production on its current deployment until the Preview path is verified.
+The user set `EKPHRASIS_AGENT_URL` and `EKPHRASIS_AGENT_SECRET` for the feature-branch Preview only. A no-content commit (`b07dd596a08e3bac6d71feae7a5d5b94e9f598a8`) triggered a fresh GitHub-connected Vercel deployment, READY at `https://ekphrasis-repair-nfc3bud06-clankclub.vercel.app` (`dpl_DoQA2DXRA3nkSckp4Lyp572gkfEs`). Production remains on `main` and was not changed.
 
-Expected: the branch Preview uses `CodexVisionAdapter` rather than HF.
+The Preview page and API route are reachable. Successful `NO_MATCH` responses show the API completed, but this smoke alone does not independently prove which vision adapter was selected.
 
 - [ ] **Step 4: Run live artwork smoke tests**
 
@@ -404,7 +404,7 @@ Test:
 - Fernand Cormon's `Bacchanale de nymphes et de satyres`;
 - one cropped/edited image.
 
-Bridge-level live smoke test passes. Full Vercel-to-museum-to-UI smoke tests remain pending until the two Preview environment variables are configured and the branch redeploys.
+Partial live smoke test on 2026-09-28: the Met control image and user-provided Cormon image `2-129302.jpg` (with filename/type/size context) each returned HTTP 200 `NO_MATCH`, `degraded: true`, and unavailable sources `met`, `rijksmuseum`, `smithsonian`. The Vercel page returns 200. Vercel runtime logs also report missing optional Upstash Redis URL/token. These results do not count as successful artwork matches; the remaining image cases and interactive result view are still pending.
 
 Record whether each is correct, honest no-match/uncertain, or confidently wrong.
 

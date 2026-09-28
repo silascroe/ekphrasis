@@ -22,7 +22,9 @@ Primary museum sources are The Metropolitan Museum of Art, Rijksmuseum, Art Inst
 
 ## Bridge rollout status
 
-Status as of 2026-09-27: implementation is on the open [PR #7](https://github.com/silascroe/ekphrasis-repair/pull/7). The bridge service is running on the Droplet as the existing `domainpatrol` user, and a live image request returned a valid Codex identification. The remaining step is to add `EKPHRASIS_AGENT_URL` and `EKPHRASIS_AGENT_SECRET` to the `feature/codex-vision-bridge` Preview environment in Vercel and redeploy; then verify the full museum and UI path.
+Status as of 2026-09-28: implementation is on open [PR #7](https://github.com/silascroe/ekphrasis-repair/pull/7). The bridge service is running on the Droplet as the existing `domainpatrol` user, and its direct smoke test returned a valid Codex identification. The user added `EKPHRASIS_AGENT_URL` and `EKPHRASIS_AGENT_SECRET` to Vercel Preview; the latest feature-branch deployment is READY at [the Preview URL](https://ekphrasis-repair-nfc3bud06-clankclub.vercel.app). Production remains untouched.
+
+The Preview page returns 200. Two live `POST /api/identify` requests returned HTTP 200 `NO_MATCH` with `degraded: true` and unavailable sources `met`, `rijksmuseum`, and `smithsonian` (one public-domain Met control image and the user's Fernand Cormon image). This verifies the route returns a valid result shape, not that recognition succeeds. Vercel logs show the optional Upstash Redis URL/token are absent, so caching falls back to memory. The planned artwork suite and interactive result view remain unverified; diagnose museum availability before calling the rollout complete.
 
 See [the bridge design](docs/superpowers/specs/2026-09-27-codex-vision-bridge-design.md), [the implementation plan](docs/superpowers/plans/2026-09-27-codex-vision-bridge.md), and [the Python service runbook](services/codex-vision/README.md). Deployment is the plan’s remaining Task 6.
 
