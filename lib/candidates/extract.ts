@@ -7,6 +7,11 @@ export type ExtractedArtwork = {
 
 export type VisionDetection = {
   extracted?: ExtractedArtwork;
+  research?: {
+    confidence?: "high" | "medium" | "low";
+    sourceUrls?: string[];
+    evidence?: string[];
+  };
   webDetection?: {
     webEntities?: Array<{ description?: string | null }>;
     bestGuessLabels?: Array<{ label?: string | null }>;

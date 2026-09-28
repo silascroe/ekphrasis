@@ -18,13 +18,15 @@ The app is a Next.js App Router application deployed through Vercel. The vision 
 
 The Python bridge generates artwork candidates only. Museum search, matching/scoring, cache behavior, enrichment, and presentation stay in the existing TypeScript application. A Codex candidate does not become a public match without the existing museum evidence checks.
 
+When the bridge returns a named identity but museum records do not confirm it, the UI can show a separate `SUGGESTION` with Codex's reported confidence, research notes, and links. It is explicitly unverified and never uses the `MATCH` state.
+
 Primary museum sources are The Metropolitan Museum of Art, Rijksmuseum, Art Institute of Chicago, and Smithsonian Open Access.
 
 ## Bridge rollout status
 
-Status as of 2026-09-28: implementation is on open [PR #7](https://github.com/silascroe/ekphrasis-repair/pull/7). The bridge service is running on the Droplet as the existing `domainpatrol` user, and its direct smoke test returned a valid Codex identification. The user added `EKPHRASIS_AGENT_URL` and `EKPHRASIS_AGENT_SECRET` to Vercel Preview; the smoke-tested deployment was [the feature-branch Preview](https://ekphrasis-repair-nfc3bud06-clankclub.vercel.app). The current feature-branch Preview is available at [the stable branch alias](https://ekphrasis-repair-git-feature-codex-vision-bridge-clankclub.vercel.app). Production remains untouched.
+Status as of 2026-09-28: implementation is on open [PR #7](https://github.com/silascroe/ekphrasis-repair/pull/7). The bridge service is running on the Droplet as the existing `domainpatrol` user, and its direct smoke test returned a valid Codex identification. The user added `EKPHRASIS_AGENT_URL` and `EKPHRASIS_AGENT_SECRET` to Vercel Preview; museum API keys are not configured there. The feature-branch Preview is available at [the stable branch alias](https://ekphrasis-repair-git-feature-codex-vision-bridge-clankclub.vercel.app). Production remains untouched.
 
-The Preview page returns 200. Two live `POST /api/identify` requests returned HTTP 200 `NO_MATCH` with `degraded: true` and unavailable sources `met`, `rijksmuseum`, and `smithsonian` (one public-domain Met control image and the user's Fernand Cormon image). This verifies the route returns a valid result shape, not that recognition succeeds. Vercel logs show the optional Upstash Redis URL/token are absent, so caching falls back to memory. The planned artwork suite and interactive result view remain unverified; diagnose museum availability before calling the rollout complete.
+The Preview page returns 200. Live `POST /api/identify` requests returned HTTP 200 with museum sources `met`, `rijksmuseum`, and `smithsonian` unavailable; Vercel logs show missing optional Upstash Redis variables, so caching falls back to memory. The user later confirmed the museum API keys were never configured. The Mona Lisa test image is not held by any of the four integrated museums, so a museum-confirmed match is not expected for it. The feature branch adds a separate unverified-suggestion path to expose the bridge's result while preserving the museum evidence gate for `MATCH`; the new path still needs deployment verification. This is a bridge/UI demonstration, not completion of museum-source rollout.
 
 See [the bridge design](docs/superpowers/specs/2026-09-27-codex-vision-bridge-design.md), [the implementation plan](docs/superpowers/plans/2026-09-27-codex-vision-bridge.md), and [the Python service runbook](services/codex-vision/README.md). Deployment is the plan’s remaining Task 6.
 

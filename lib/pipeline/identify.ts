@@ -169,6 +169,7 @@ export async function identifyImage(request: IdentifyRequest, deps: IdentifyDeps
       }
     }
 
+    const suggestedIdentity = detection.extracted?.title?.trim() || detection.extracted?.artist?.trim();
     const result: IdentificationResult = selection.candidate
       ? {
           state: "MATCH",
@@ -179,6 +180,24 @@ export async function identifyImage(request: IdentifyRequest, deps: IdentifyDeps
           degraded: museumResult.unavailableSources.length > 0,
           unavailable_sources: museumResult.unavailableSources
         }
+      : suggestedIdentity
+        ? {
+            state: "SUGGESTION",
+            confidence: detection.research?.confidence ?? "low",
+            artwork: {
+              title: detection.extracted?.title ?? null,
+              artist: detection.extracted?.artist ?? null,
+              year: detection.extracted?.year ?? null,
+              medium: detection.extracted?.medium ?? null,
+              style: null
+            },
+            candidates: [...new Set((detection.webDetection?.webEntities ?? [])
+              .map(item => item.description?.trim())
+              .filter((value): value is string => Boolean(value)))].slice(0, 8),
+            source_urls: detection.research?.sourceUrls ?? [],
+            evidence: detection.research?.evidence ?? [],
+            unavailable_sources: museumResult.unavailableSources
+          }
       : {
           state: "NO_MATCH",
           reason: "insufficient_evidence",

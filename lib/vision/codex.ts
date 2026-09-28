@@ -104,6 +104,11 @@ function toDetection(result: BridgeResponse): VisionDetection {
 
   return {
     extracted,
+    research: {
+      confidence: result.confidence,
+      sourceUrls: result.source_urls,
+      evidence: result.evidence
+    },
     webDetection: {
       webEntities: [...new Set(values)].map(description => ({ description })),
       bestGuessLabels: []

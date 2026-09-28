@@ -404,7 +404,7 @@ Test:
 - Fernand Cormon's `Bacchanale de nymphes et de satyres`;
 - one cropped/edited image.
 
-Partial live smoke test on 2026-09-28: the Met control image and user-provided Cormon image `2-129302.jpg` (with filename/type/size context) each returned HTTP 200 `NO_MATCH`, `degraded: true`, and unavailable sources `met`, `rijksmuseum`, `smithsonian`. The Vercel page returns 200. Vercel runtime logs also report missing optional Upstash Redis URL/token. These results do not count as successful artwork matches; the remaining image cases and interactive result view are still pending.
+Partial live smoke test on 2026-09-28: the Met control image and user-provided Cormon image `2-129302.jpg` (with filename/type/size context) each returned HTTP 200 `NO_MATCH`, `degraded: true`, and unavailable sources `met`, `rijksmuseum`, `smithsonian`. The user confirmed the museum API keys were never configured; do not spend time recovering them for the current demo. The provided Mona Lisa image also reached the UI's degraded `NO_MATCH` state. Mona Lisa is not held by any of the four integrated museums, so it cannot become a catalog-confirmed match through the current source set. The feature branch adds a distinct `SUGGESTION` response for a named vision result with no museum-confirmed match; it shows the Codex output and cites its own research without upgrading it to `MATCH`. Vercel runtime logs also report missing optional Upstash Redis URL/token. Production remains untouched; verify the deployed suggestion state before calling the Preview demo fixed.
 
 Record whether each is correct, honest no-match/uncertain, or confidently wrong.
 

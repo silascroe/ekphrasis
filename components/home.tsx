@@ -5,6 +5,7 @@ import type { IdentificationResult } from "../lib/types";
 import { UploadForm } from "../components/upload-form";
 import { ProcessingState } from "../components/processing-state";
 import { MatchCard } from "../components/match-card";
+import { SuggestionCard } from "../components/suggestion-card";
 import { NoMatch } from "../components/no-match";
 import { ErrorState } from "../components/error-state";
 
@@ -12,7 +13,7 @@ export function Home({
   initialState = "IDLE",
   result: initialResult
 }: {
-  initialState?: "IDLE" | "PROCESSING" | "MATCH" | "NO_MATCH" | "ERROR";
+  initialState?: "IDLE" | "PROCESSING" | "MATCH" | "SUGGESTION" | "NO_MATCH" | "ERROR";
   result?: IdentificationResult;
 }) {
   const [state, setState] = useState(initialState);
@@ -34,6 +35,7 @@ export function Home({
       {state === "IDLE" ? <UploadForm onStart={() => setState("PROCESSING")} onResult={handleResult} /> : null}
       {state === "PROCESSING" ? <ProcessingState /> : null}
       {result?.state === "MATCH" ? <MatchCard result={result} /> : null}
+      {result?.state === "SUGGESTION" ? <SuggestionCard result={result} /> : null}
       {result?.state === "NO_MATCH" ? <NoMatch degraded={result.degraded} /> : null}
       {result?.state === "ERROR" ? <ErrorState code={result.error} /> : null}
       {state !== "IDLE" && state !== "PROCESSING" ? (

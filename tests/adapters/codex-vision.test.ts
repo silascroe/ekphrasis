@@ -58,6 +58,11 @@ describe("CodexVisionAdapter", () => {
     expect(bodyText).not.toContain(secret);
     expect(result).toEqual({
       extracted: { artist: "Painter", title: "The Work", year: "1901", medium: null },
+      research: {
+        confidence: "high",
+        sourceUrls: ["https://museum.example/object/42"],
+        evidence: ["The signature reads Painter."]
+      },
       webDetection: {
         webEntities: [
           { description: "distinctive catalog phrase" },

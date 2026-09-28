@@ -13,6 +13,11 @@ describe("result cache policy", () => {
     expect(ttlFor("degraded")).toBe(15 * 60);
   });
 
+  it("keeps unverified suggestions on the short degraded cache lifetime", () => {
+    expect(cacheClassFor({ state: "SUGGESTION", degraded: false })).toBe("degraded");
+    expect(ttlFor("degraded")).toBe(15 * 60);
+  });
+
   it("never caches API unavailable", () => {
     expect(cacheClassFor({ state: "ERROR", error: "API_UNAVAILABLE" })).toBe("uncacheable");
   });
