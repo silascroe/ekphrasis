@@ -67,10 +67,14 @@ describe("upload context in the identification pipeline", () => {
     expect(keys[0]).toBe(keys[2]);
   });
 
-  it("keeps museum evidence as the final gate when no catalog result corroborates a candidate", async () => {
+  it("keeps museum evidence as the final gate and labels an uncorroborated candidate as a suggestion", async () => {
     const setup = dependencies();
     const result = await identifyImage({ file: file(), address: "test", context: uploadContext }, setup.deps);
 
-    expect(result).toMatchObject({ state: "NO_MATCH", reason: "insufficient_evidence" });
+    expect(result).toMatchObject({
+      state: "SUGGESTION",
+      artwork: { title: "A Work", artist: "Artist" }
+    });
+    expect(result.state).not.toBe("MATCH");
   });
 });
